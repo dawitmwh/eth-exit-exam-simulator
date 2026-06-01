@@ -16,18 +16,19 @@ export function MobileLayout() {
 
   // show admin item only for admins
   if (user?.role === 'ADMIN') {
-    navItems.push({ path: 'admin/dashboard', icon: Users, label: 'Admin' });
+    navItems.push({ path: '/admin/dashboard', icon: Users, label: 'Admin' });
   }
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden">
+    // page background changed to cyan, secondary deep purple used for nav/sidebar
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-cyan-50">
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
         <Outlet />
       </main>
 
-      {/* Bottom Navigation - Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border md:hidden z-50 safe-area-inset-bottom">
+      {/* Bottom Navigation - Mobile (deep purplish secondary) */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-purple-900 border-t border-purple-800 md:hidden z-50 safe-area-inset-bottom">
         <div className="flex justify-around items-center h-16 px-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -44,12 +45,12 @@ export function MobileLayout() {
                 >
                   <Icon
                     className={`w-6 h-6 ${
-                      isActive ? 'text-primary' : 'text-muted-foreground'
+                      isActive ? 'text-cyan-300' : 'text-white/80'
                     }`}
                   />
                   <span
                     className={`text-[11px] mt-1 ${
-                      isActive ? 'text-primary font-medium' : 'text-muted-foreground'
+                      isActive ? 'text-cyan-200 font-medium' : 'text-white/80'
                     }`}
                   >
                     {item.label}
@@ -58,7 +59,7 @@ export function MobileLayout() {
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-primary rounded-full"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-cyan-300 rounded-full"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -68,10 +69,10 @@ export function MobileLayout() {
         </div>
       </nav>
 
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:block fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border">
+      {/* Desktop Sidebar (deep purplish secondary) */}
+      <aside className="hidden md:block fixed left-0 top-0 bottom-0 w-64 bg-purple-900 border-r border-purple-800 text-cyan-50">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-primary mb-8">Exit Examiner</h1>
+          <h1 className="text-2xl font-bold text-cyan-50 mb-8">Exit Examiner</h1>
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -82,8 +83,8 @@ export function MobileLayout() {
                   to={item.path}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      ? 'bg-purple-800 text-cyan-50'
+                      : 'text-cyan-100 hover:bg-purple-800/10 hover:text-cyan-50'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -97,3 +98,4 @@ export function MobileLayout() {
     </div>
   );
 }
+

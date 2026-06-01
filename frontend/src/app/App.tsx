@@ -13,22 +13,21 @@ import { DashboardLayout } from './components/DashboardLayout';
 // Pages - Marketing
 import { MarketingLandingPage } from './pages/MarketingLandingPage';
 import { InstitutionSignup } from './pages/InstitutionSignup';
-
-// Pages - Portal
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { AdminDashboard } from './components/AdminDashboard'; // This handles both Student/Admin logic
-import  MainAdminDashboard from "./pages/admin/MainAdminDashboard"
+import { AdminDashboard } from './components/AdminDashboard';
 import { ExamList } from './components/ExamList';
 import { ExamSession } from './components/ExamSession';
 import { Analytics } from './components/Analytics';
 import { Profile } from './components/Profile';
 import { AdminVouchers } from './pages/AdminVouchers';
+import { Register } from './pages/Register';
+import { Login } from './pages/Login';
 
 // UI Components
 import { SplashScreen } from './components/SplashScreen';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Toaster } from './components/ui/sonner';
+import { MobileLayout } from './components/MobileLayout';
+import MainAdminDashboard from './pages/admin/MainAdminDashboard';
 
 export default function App() {
   const [isSplashLoading, setIsSplashLoading] = useState(true);
@@ -83,11 +82,12 @@ export default function App() {
                     <Route path="/register" element={<Register />} />
 
                     {/* All pages inside this block will HAVE the Sidebar (DashboardLayout) */}
-                    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                    <Route element={<ProtectedRoute><MobileLayout /></ProtectedRoute>}>
                       <Route index element={<AdminDashboard />} />
                       <Route path="exams" element={<ExamList />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="profile" element={<Profile />} />
+                      <Route path="admin/dashboard" element={<MainAdminDashboard />} />
                     </Route>
 
                     {/* Exam Session is usually full-screen (No Sidebar) */}
@@ -110,4 +110,5 @@ export default function App() {
       </AuthProvider>
     </BrowserRouter>
   );
+
 }
