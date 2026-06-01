@@ -1,58 +1,60 @@
 import { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { AnimatePresence } from 'motion/react';
+
+// Contexts & Protection
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { MobileLayout } from './components/MobileLayout';
+
+// Layouts
+import { DashboardLayout } from './components/DashboardLayout';
+// Pages - Dashboard
+ 
+// Pages - Marketing
 import { MarketingLandingPage } from './pages/MarketingLandingPage';
 import { InstitutionSignup } from './pages/InstitutionSignup';
-import { AdminDashboard } from './components/AdminDashboard';
+
+// Pages - Portal
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { AdminDashboard } from './components/AdminDashboard'; // This handles both Student/Admin logic
 import  MainAdminDashboard from "./pages/admin/MainAdminDashboard"
 import { ExamList } from './components/ExamList';
 import { ExamSession } from './components/ExamSession';
 import { Analytics } from './components/Analytics';
 import { Profile } from './components/Profile';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
+import { AdminVouchers } from './pages/AdminVouchers';
+
+// UI Components
 import { SplashScreen } from './components/SplashScreen';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { Toaster } from './components/ui/sonner';
-import { AdminVouchers } from './pages/AdminVouchers';
 
-// The main App component sets up routing, authentication context, and global UI elements
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  // 1. On initial load, we set up a splash screen and calculate the --vh CSS variable for mobile viewport height
+  const [isSplashLoading, setIsSplashLoading] = useState(true);
+
+  // 1. Detect if we are on Root (localhost) or Subdomain (aau.localhost)
+  const isRootDomain = useMemo(() => {
+    const hostname = window.location.hostname;
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  }, []);
+
   useEffect(() => {
+    // Fix viewport height for mobile browsers
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
     };
-    // Initial calculation of --vh on mount
     setVH();
     window.addEventListener('resize', setVH);
-    window.addEventListener('orientationchange', setVH);
 
-    // Simulate loading time for the splash screen (e.g., while checking auth state)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    // Cleanup event listeners and timer on unmount
+    const timer = setTimeout(() => setIsSplashLoading(false), 1500);
     return () => {
       window.removeEventListener('resize', setVH);
-      window.removeEventListener('orientationchange', setVH);
       clearTimeout(timer);
     };
   }, []);
 
-  const isRootDomain = useMemo(() => {
-    const hostname = window.location.hostname;
-    // In production, this would be 'exitexaminer.com'
-    // On your machine, it is 'localhost'
-    return hostname === 'localhost' || hostname === '127.0.0.1';
-  }, []);
-
-  // 2. The App component wraps everything in BrowserRouter for routing and AuthProvider for authentication context
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -60,50 +62,35 @@ export default function App() {
           <Toaster />
           <OfflineIndicator />
           <AnimatePresence mode="wait">
-            {isLoading ? (
+            {isSplashLoading ? (
               <SplashScreen key="splash" />
             ) : (
               <Routes key="routes">
-                {/* 
-                   2. CONDITIONAL ROUTING SWITCH 
-                   If on Root -> Show Marketing. If on Subdomain -> Show Portal.
-                */}
+                
+                {/* --- CASE 1: PUBLIC MARKETING SITE --- */}
                 {isRootDomain ? (
-                  /* --- PUBLIC MARKETING ROUTES (Root Domain Only) --- */
                   <>
                     <Route path="/" element={<MarketingLandingPage />} />
                     <Route path="/signup-institution" element={<InstitutionSignup />} />
-                    {/* If a student types /login on the marketing site, redirect them home */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 ) : (
-                  /* --- PRIVATE PORTAL ROUTES (Subdomains Only) --- */
+                  
+                  /* --- CASE 2: PRIVATE UNIVERSITY PORTAL --- */
                   <>
+                    {/* Public Portal Pages */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
-                    <Route path="admin/vouchers" 
-                           element={
-                              <ProtectedRoute>
-                                <AdminVouchers />
-                              </ProtectedRoute>
-                            } 
-                            />
 
-                    <Route
-                      path="/"
-                      element={
-                        <ProtectedRoute>
-                          <MobileLayout />
-                        </ProtectedRoute>
-                      }
-                    >
+                    {/* All pages inside this block will HAVE the Sidebar (DashboardLayout) */}
+                    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                       <Route index element={<AdminDashboard />} />
                       <Route path="exams" element={<ExamList />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="profile" element={<Profile />} />
-                      <Route path="admin/dashboard" element={<MainAdminDashboard />} />
                     </Route>
 
+                    {/* Exam Session is usually full-screen (No Sidebar) */}
                     <Route
                       path="/exam/:examId"
                       element={
@@ -113,7 +100,6 @@ export default function App() {
                       }
                     />
                     
-                    {/* Safe redirect for subdomains */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </>
                 )}

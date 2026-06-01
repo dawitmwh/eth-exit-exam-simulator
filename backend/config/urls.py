@@ -31,14 +31,13 @@ from users.views import MyTokenObtainPairView, RegisterWithVoucher
 from exams.views import (
     QuestionSyncView, StudentDashboardView, 
     CompetencyAreaViewSet, QuestionViewSet, 
-    ExamAttemptViewSet, DeanAnalyticsView
+    ExamAttemptViewSet
 )
 
 from core.views import (
     RegisterUniversityView, CheckSlugView, 
     DepartmentViewSet, VoucherViewSet
-    #GenerateVouchersView, 
-    #VoucherListView
+    
 )
 
 router = DefaultRouter()
@@ -58,7 +57,6 @@ urlpatterns = [
     path('questions/sync/', QuestionSyncView.as_view(), name='question-sync'),
     path(('api/users/register/'), RegisterWithVoucher.as_view(), name='register'),
     path('api/check-slug/', CheckSlugView.as_view(), name='check-slug'),
-    #path('api/generate-vouchers/', GenerateVouchersView.as_view(), name='generate-vouchers'),
-    #path('api/vouchers/', VoucherListView.as_view(), name='voucher-list'),
-    path('api/analytics/', DeanAnalyticsView.as_view(), name='dean-analytics'),
+    
+     
 ]

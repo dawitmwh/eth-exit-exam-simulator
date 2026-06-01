@@ -37,9 +37,10 @@ export function AdminVouchers() {
   const fetchData = async () => {
     try {
       const [vRes, dRes, sRes] = await Promise.all([
-        apiClient.get('/core/vouchers/'),
-        apiClient.get('/core/departments/'),
-        apiClient.get('/core/vouchers/analytics/')
+        
+        apiClient.get('/vouchers/'),
+        apiClient.get('/departments/'),
+        apiClient.get('/vouchers/analytics/')
       ]);
 
       setVouchers(vRes.data);
@@ -59,7 +60,7 @@ export function AdminVouchers() {
     
     setIsSubmitting(true);
     try {
-      await apiClient.post('/core/vouchers/generate/', {
+      await apiClient.post('/vouchers/generate/', {
         count: batchCount,
         department_id: selectedDept
       });
@@ -89,7 +90,7 @@ export function AdminVouchers() {
       </header>
 
       {/* 1. ANALYTICS ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
         <QuickStat label="Total Licenses" value={stats?.total} icon={<Ticket />} color="text-blue-600" />
         <QuickStat label="Students Joined" value={stats?.redeemed} color="text-green-600" />
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
