@@ -1,0 +1,62 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "email": "student@demo.com",
+      "password": "demo123",
+      "fullName": "Sarah Johnson",
+      "role": "STUDENT",
+      "organizationId": "1",
+      "departmentId": "1",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+      "createdAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "2",
+      "email": "admin@demo.com",
+      "password": "admin123",
+      "fullName": "Dr. Michael Chen",
+      "role": "ADMIN",
+      "organizationId": "1",
+      "departmentId": "1",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
+      "createdAt": "2024-01-10T10:00:00Z"
+    },
+    {
+      "id": "3",
+      "email": "john@demo.com",
+      "password": "demo123",
+      "fullName": "John Smith",
+      "role": "STUDENT",
+      "organizationId": "1",
+      "departmentId": "2",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+      "createdAt": "2024-02-01T10:00:00Z"
+    }
+  ],
+  "organizations": [
+    {
+      "id": "1",
+      "name": "Addis Ababa University",
+      "location": "Addis Ababa, Ethiopia",
+      "logoUrl": null
+    }
+  ],
+  "departments": [
+    {
+      "id": "1",
+      "organizationId": "1",
+      "name": "Nursing"
+    },
+    {
+      "id": "2",
+      "organizationId": "1",
+      "name": "Pharmacy"
+    },
+    {
+      "id": "3",
+      "organizationId": "1",
+      "name": "Civil Engineering"
+    }
+  ]
+}

@@ -1,9 +1,11 @@
 import { Outlet, useLocation, Link } from 'react-router';
-import { Home, BookOpen, BarChart3, User } from 'lucide-react';
+import { Home, BookOpen, BarChart3, User, Users } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useAuth } from '../contexts/AuthContext';
 
 export function MobileLayout() {
   const location = useLocation();
+  const { user } = useAuth();
 
   const navItems = [
     { path: '/', icon: Home, label: 'Home' },
@@ -11,6 +13,11 @@ export function MobileLayout() {
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
+
+  // show admin item only for admins
+  if (user?.role === 'ADMIN') {
+    navItems.push({ path: 'admin/dashboard', icon: Users, label: 'Admin' });
+  }
 
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden">

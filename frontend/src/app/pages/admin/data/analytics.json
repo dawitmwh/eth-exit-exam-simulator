@@ -1,0 +1,104 @@
+{
+  "examAttempts": [
+    {
+      "id": "1",
+      "userId": "1",
+      "examId": "1",
+      "startTime": "2024-05-10T09:00:00Z",
+      "endTime": "2024-05-10T11:00:00Z",
+      "totalScore": 78.5,
+      "status": "COMPLETED"
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "examId": "2",
+      "startTime": "2024-05-12T14:00:00Z",
+      "endTime": "2024-05-12T14:28:00Z",
+      "totalScore": 85.2,
+      "status": "COMPLETED"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "examId": "1",
+      "startTime": "2024-05-15T10:00:00Z",
+      "endTime": "2024-05-15T11:55:00Z",
+      "totalScore": 82.3,
+      "status": "COMPLETED"
+    }
+  ],
+  "examResponses": [
+    {
+      "id": "1",
+      "attemptId": "1",
+      "questionId": "1",
+      "selectedOptionId": "1b",
+      "isCorrect": true,
+      "timeSpentSeconds": 45
+    },
+    {
+      "id": "2",
+      "attemptId": "1",
+      "questionId": "2",
+      "selectedOptionId": "2a",
+      "isCorrect": false,
+      "timeSpentSeconds": 120
+    },
+    {
+      "id": "3",
+      "attemptId": "1",
+      "questionId": "3",
+      "selectedOptionId": "3a",
+      "isCorrect": true,
+      "timeSpentSeconds": 30
+    }
+  ],
+  "performanceMetrics": {
+    "1": {
+      "userId": "1",
+      "overallScore": 81.5,
+      "totalAttempts": 3,
+      "subjectBreakdown": {
+        "1": {
+          "subjectName": "Human Anatomy",
+          "avgScore": 75.5,
+          "avgTimePerQuestion": 180,
+          "totalQuestions": 25
+        },
+        "2": {
+          "subjectName": "Pharmacology",
+          "avgScore": 68.2,
+          "avgTimePerQuestion": 210,
+          "totalQuestions": 20
+        },
+        "3": {
+          "subjectName": "Clinical Nursing",
+          "avgScore": 88.5,
+          "avgTimePerQuestion": 150,
+          "totalQuestions": 30
+        },
+        "4": {
+          "subjectName": "Medical Ethics",
+          "avgScore": 92.0,
+          "avgTimePerQuestion": 45,
+          "totalQuestions": 15
+        }
+      },
+      "progressOverTime": [
+        {
+          "date": "2024-05-10",
+          "score": 78.5
+        },
+        {
+          "date": "2024-05-12",
+          "score": 85.2
+        },
+        {
+          "date": "2024-05-15",
+          "score": 82.3
+        }
+      ]
+    }
+  }
+}

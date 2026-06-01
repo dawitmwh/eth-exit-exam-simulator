@@ -7,6 +7,7 @@ import { MobileLayout } from './components/MobileLayout';
 import { MarketingLandingPage } from './pages/MarketingLandingPage';
 import { InstitutionSignup } from './pages/InstitutionSignup';
 import { AdminDashboard } from './components/AdminDashboard';
+import  MainAdminDashboard from "./pages/admin/MainAdminDashboard"
 import { ExamList } from './components/ExamList';
 import { ExamSession } from './components/ExamSession';
 import { Analytics } from './components/Analytics';
@@ -100,6 +101,7 @@ export default function App() {
                       <Route path="exams" element={<ExamList />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="profile" element={<Profile />} />
+                      <Route path="admin/dashboard" element={<MainAdminDashboard />} />
                     </Route>
 
                     <Route

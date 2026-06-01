@@ -1,0 +1,145 @@
+{
+  "subjects": [
+    {
+      "id": "1",
+      "name": "Human Anatomy",
+      "departmentId": "1"
+    },
+    {
+      "id": "2",
+      "name": "Pharmacology",
+      "departmentId": "1"
+    },
+    {
+      "id": "3",
+      "name": "Clinical Nursing",
+      "departmentId": "1"
+    },
+    {
+      "id": "4",
+      "name": "Medical Ethics",
+      "departmentId": "1"
+    }
+  ],
+  "exams": [
+    {
+      "id": "1",
+      "title": "Nursing Exit Exam - Full Mock",
+      "description": "Comprehensive nursing exit examination covering all major topics",
+      "departmentId": "1",
+      "durationMinutes": 120,
+      "isMock": true,
+      "totalQuestions": 50
+    },
+    {
+      "id": "2",
+      "title": "Anatomy Quick Practice",
+      "description": "Practice test focusing on human anatomy",
+      "departmentId": "1",
+      "durationMinutes": 30,
+      "isMock": false,
+      "totalQuestions": 15
+    },
+    {
+      "id": "3",
+      "title": "Pharmacology Assessment",
+      "description": "Comprehensive pharmacology assessment",
+      "departmentId": "1",
+      "durationMinutes": 45,
+      "isMock": false,
+      "totalQuestions": 20
+    }
+  ],
+  "questions": [
+    {
+      "id": "1",
+      "subjectId": "1",
+      "text": "Which chamber of the heart receives oxygenated blood from the lungs?",
+      "imageUrl": null,
+      "explanation": "The left atrium receives oxygenated blood from the lungs via the pulmonary veins. This blood then flows to the left ventricle before being pumped to the rest of the body.",
+      "difficulty": "MEDIUM",
+      "options": [
+        {
+          "id": "1a",
+          "text": "Right atrium",
+          "isCorrect": false
+        },
+        {
+          "id": "1b",
+          "text": "Left atrium",
+          "isCorrect": true
+        },
+        {
+          "id": "1c",
+          "text": "Right ventricle",
+          "isCorrect": false
+        },
+        {
+          "id": "1d",
+          "text": "Left ventricle",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "subjectId": "2",
+      "text": "What is the mechanism of action of ACE inhibitors?",
+      "imageUrl": null,
+      "explanation": "ACE inhibitors work by blocking the angiotensin-converting enzyme, which prevents the conversion of angiotensin I to angiotensin II, leading to vasodilation and reduced blood pressure.",
+      "difficulty": "HARD",
+      "options": [
+        {
+          "id": "2a",
+          "text": "Block calcium channels",
+          "isCorrect": false
+        },
+        {
+          "id": "2b",
+          "text": "Inhibit angiotensin-converting enzyme",
+          "isCorrect": true
+        },
+        {
+          "id": "2c",
+          "text": "Block beta receptors",
+          "isCorrect": false
+        },
+        {
+          "id": "2d",
+          "text": "Increase sodium excretion",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "subjectId": "4",
+      "text": "What is the primary principle of informed consent?",
+      "imageUrl": null,
+      "explanation": "Patient autonomy is the cornerstone of informed consent, ensuring that patients have the right to make informed decisions about their own healthcare.",
+      "difficulty": "EASY",
+      "options": [
+        {
+          "id": "3a",
+          "text": "Patient autonomy",
+          "isCorrect": true
+        },
+        {
+          "id": "3b",
+          "text": "Doctor's judgment",
+          "isCorrect": false
+        },
+        {
+          "id": "3c",
+          "text": "Hospital policy",
+          "isCorrect": false
+        },
+        {
+          "id": "3d",
+          "text": "Family decision",
+          "isCorrect": false
+        }
+      ]
+    }
+  ]
+}
