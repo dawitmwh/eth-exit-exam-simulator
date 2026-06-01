@@ -4,13 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../api/client';
 import { 
   Trophy, Target, BookOpen, TrendingUp, 
-  Users, Ticket, ChevronRight, Loader2, 
-  LayoutDashboard, LogOut, Menu, X 
+  Users, ChevronRight, Loader2, 
+  
 } from 'lucide-react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Progress } from './ui/progress';
-import { Badge } from './ui/badge';
+ 
 import { motion, AnimatePresence  } from 'motion/react'; 
 
 
@@ -70,61 +67,17 @@ export function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* 1. SIDEBAR (Desktop) */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-indigo-950 text-white transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
-        <div className="p-6 flex flex-col h-full">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="bg-white/10 p-2 rounded-lg">
-              <Trophy className="text-indigo-400 w-6 h-6" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Exit Examiner</span>
-          </div>
-
-          <nav className="flex-1 space-y-2">
-            <NavItem icon={<LayoutDashboard size={20}/>} label="Overview" active onClick={() => navigate('/')} />
-            <NavItem icon={<BookOpen size={20}/>} label="Practice Exams" onClick={() => navigate('/exams')} />
-            {isAdmin && <NavItem icon={<Ticket size={20}/>} label="Manage Vouchers" onClick={() => navigate('/admin/vouchers')} />}
-            {isAdmin && <NavItem icon={<Users size={20}/>} label="Departments" onClick={() => navigate('/admin/departments')} />}
-          </nav>
-
-          <button 
-            onClick={logout}
-            className="flex items-center gap-3 p-3 text-indigo-300 hover:text-white hover:bg-white/5 rounded-xl transition-all"
-          >
-            <LogOut size={20} />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
-      </aside>
+    
 
       {/* 2. MAIN CONTENT */}
       <main className="flex-1 md:ml-64 min-w-0">
         {/* Top Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 md:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 text-slate-600" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-              {isSidebarOpen ? <X /> : <Menu />}
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 hidden md:block">{data?.university}</h1>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{data?.department}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-slate-900">{user?.full_name}</p>
-              <p className="text-xs text-slate-500">{user?.role}</p>
-            </div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold">
-              {user?.full_name?.charAt(0)}
-            </div>
-          </div>
-        </header>
-
+        
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
           {/* Welcome Section */}
           <section>
             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">
-              {isAdmin ? "Institutional Overview" : `Welcome back, ${user?.full_name}! 👋`}
+              {isAdmin ? `${user?.university_name}` : `Welcome back, ${user?.email}! 👋`}
             </h2>
             <p className="text-slate-500 mt-1">Here is what's happening with your preparation.</p>
           </section>
