@@ -28,6 +28,8 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { Toaster } from './components/ui/sonner';
 import { MobileLayout } from './components/MobileLayout';
 import MainAdminDashboard from './pages/admin/MainAdminDashboard';
+import { AdminModeProvider } from './contexts/AdminContext';
+import Departments from './pages/admin/Departments';
 
 export default function App() {
   const [isSplashLoading, setIsSplashLoading] = useState(true);
@@ -57,6 +59,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <AdminModeProvider>
         <div className="min-h-screen bg-background">
           <Toaster />
           <OfflineIndicator />
@@ -87,7 +90,10 @@ export default function App() {
                       <Route path="exams" element={<ExamList />} />
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="profile" element={<Profile />} />
-                      <Route path="admin/dashboard" element={<MainAdminDashboard />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/admin/dashboard" element={<MainAdminDashboard />} />
+                      <Route path="/admin/vouchers" element={<AdminVouchers />} />
+                      <Route path="/admin/departments" element={<Departments />} />
                     </Route>
 
                     {/* Exam Session is usually full-screen (No Sidebar) */}
@@ -107,6 +113,7 @@ export default function App() {
             )}
           </AnimatePresence>
         </div>
+        </AdminModeProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -35,12 +35,13 @@ from exams.views import (
 )
 
 from core.views import (
-    RegisterUniversityView, CheckSlugView, 
-    DepartmentViewSet, VoucherViewSet
-    
+    RegisterUniversityView, CheckSlugView,
+    DepartmentViewSet, VoucherViewSet,
+    DepartmentCompetencyAreasView,  # add this import
 )
 
 router = DefaultRouter()
+
 router.register(r'competency-areas', CompetencyAreaViewSet, basename='competencyarea')
 router.register(r'questions', QuestionViewSet, basename='question')
 router.register(r'exam-attempts', ExamAttemptViewSet, basename='examattempt')
@@ -57,6 +58,10 @@ urlpatterns = [
     path('questions/sync/', QuestionSyncView.as_view(), name='question-sync'),
     path(('api/users/register/'), RegisterWithVoucher.as_view(), name='register'),
     path('api/check-slug/', CheckSlugView.as_view(), name='check-slug'),
-    
-     
+    # Single endpoint for all methods on competency areas by department
+    path(
+        'api/departments/<int:dept_id>/competency-areas/',
+        DepartmentCompetencyAreasView.as_view(),
+        name='dept-competency-areas'
+    ),
 ]

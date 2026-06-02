@@ -116,3 +116,27 @@ class QuestionSyncSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'subject_name', 'text', 'explanation', 'difficulty', 'options', 'updated_at']
+
+
+class CompetencyAreaCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a CompetencyArea when department is provided via context.
+    - Accepts: { name, duration_minutes }
+    - Department must be passed in serializer context: {'department': <Department instance>}
+    """
+    class Meta:
+        model = CompetencyArea
+        fields = ['id', 'name', 'duration_minutes']
+
+    def validate_name(self, value):
+        name = (value or "").strip()
+        dept = self.context.get('department')
+        if dept and CompetencyArea.objects.filter(department=dept, name__iexact=name).exists():
+            raise serializers.ValidationError("A competency area with this name already exists in this department.")
+        return name
+
+    def create(self, validated_data):
+        dept = self.context.get('department')
+        if dept is None:
+            raise serializers.ValidationError({'department': 'Department context is required for creation.'})
+        return CompetencyArea.objects.create(department=dept, **validated_data)

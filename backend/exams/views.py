@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+
 from .serializers import (
     CompetencyAreaSerializer, QuestionSerializer, 
     StudentQuestionSerializer, ExamResponseSerializer,
@@ -29,6 +30,7 @@ class CompetencyAreaViewSet(viewsets.ModelViewSet):
         return CompetencyArea.objects.filter(department=user.department).annotate(
             annotated_question_count=Count('questions')
         )
+
  
 # This is the main viewset for questions. It dynamically chooses which serializer to use based on the user's role. Admins and teachers get the full details, while students get a simplified version that hides the correct answer and explanation.
 class QuestionViewSet(viewsets.ModelViewSet):
