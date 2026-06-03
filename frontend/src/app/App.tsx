@@ -89,6 +89,7 @@ export default function App() {
                       <Route index element={<AdminDashboard />} />
                       <Route path="exams" element={<ExamList />} />
                       <Route path="analytics" element={<Analytics />} />
+                      <Route path="vouchers" element={<AdminVouchers />} />
                       <Route path="profile" element={<Profile />} />
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/admin/dashboard" element={<MainAdminDashboard />} />
