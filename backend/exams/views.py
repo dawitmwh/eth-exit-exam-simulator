@@ -143,12 +143,21 @@ class StudentDashboardView(APIView):
             'competency_area__name'  
         ).order_by('-end_time')[:5]  
 
+        # Total Students in the same deprtment taking the exam
+        total_students = ExamAttempt.objects.filter(
+            competency_area__department=user.department,
+            competency_area__department__university=tenant,
+            status='COMPLETED'
+        ).values('user').distinct().count() 
+
+
         return Response({
             "overall": stats,
             "by_competency": competency_performance,
             "history": history,
             "department": user.department.name if user.department else 'N/A',
-            "university": tenant.name if tenant else 'N/A'
+            "university": tenant.name if tenant else 'N/A',
+            "student_count": total_students
         })
 
 

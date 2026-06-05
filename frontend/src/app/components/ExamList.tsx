@@ -1,6 +1,5 @@
 import apiClient from '../api/client';
 import { Loader2 } from 'lucide-react';
-import { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -8,37 +7,12 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { BookOpen, Clock, Target, Lock, Play } from 'lucide-react';
 import { motion } from 'motion/react';
+import { ExamData } from '../pages/admin/data/ExamData';
 
-
-// 1. Define the real interface from Django
-interface Competency {
-  id: number;
-  name: string;
-  department_name: string;
-  duration_minutes: number;
-  question_count: number;
-}
 
 export function ExamList() {
   const navigate = useNavigate();
-  const [competencies, setCompetencies] = useState<Competency[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // 2. Fetch the real data
-  useEffect(() => {
-    const fetchExams = async () => {
-      try {
-        const response = await apiClient.get('/competency-areas/');
-        setCompetencies(response.data);
-        console.log(response.data)
-      } catch (error) {
-        console.error("Failed to load exams", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchExams();
-  }, []);
+  const { competencies, loading } = ExamData();
 
   if (loading) {
     return (
@@ -86,7 +60,7 @@ export function ExamList() {
 }
 
 // 3. Updated ExamGrid component to use real data
-function ExamGrid({ competencies, mode, navigate }: { competencies: Competency[], mode: string, navigate: any }) {
+function ExamGrid({ competencies, mode, navigate }: { competencies: any[], mode: string, navigate: any }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {competencies.map((exam, index) => (

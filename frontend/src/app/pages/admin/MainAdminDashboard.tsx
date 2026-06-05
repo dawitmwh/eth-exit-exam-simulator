@@ -9,6 +9,8 @@ import QuestionsManager from './QuestionsManager';
 import examsData from './data/exams.json';
 import usersData from './data/users.json';
 import analyticsData from './data/analytics.json';
+import { ExamData } from './data/ExamData';
+import { useDashboardData } from './data/DashboardData';
 
 export default function MainAdminDashboard() {
   const { user } = useAuth();
@@ -18,6 +20,9 @@ export default function MainAdminDashboard() {
   const totalSubjects = examsData.subjects.length;
   const totalStudents = usersData.users.filter(u => u.role === 'STUDENT').length;
   const totalAttempts = analyticsData.examAttempts.length;
+  const { competencies, loading } = ExamData();
+  const { data}  = useDashboardData();
+  
 
   return (
     <div className="min-h-screen md:ml-64 bg-slate-50/50 p-6">
@@ -49,8 +54,13 @@ export default function MainAdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="pb-3">
+               
                   <CardDescription>Total Questions</CardDescription>
-                  <CardTitle className="text-3xl">{totalQuestions}</CardTitle>
+                  <CardTitle className="text-3xl">
+                    {competencies.map((exam, index) => (
+                      <span key={index}>{exam.question_count}</span>
+                    ))}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -63,12 +73,14 @@ export default function MainAdminDashboard() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Competency Areas</CardDescription>
-                  <CardTitle className="text-3xl">{totalSubjects}</CardTitle>
+                  <CardTitle className="text-3xl"> 
+                    {competencies.length}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <BookOpen className="size-4" />
-                    <span>Active subjects</span>
+                    <span>Active Areas</span>
                   </div>
                 </CardContent>
               </Card>
@@ -76,7 +88,7 @@ export default function MainAdminDashboard() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardDescription>Total Students</CardDescription>
-                  <CardTitle className="text-3xl">{totalStudents}</CardTitle>
+                  <CardTitle className="text-3xl">{data?.student_count}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
-import apiClient from '../api/client';
 import { 
   Trophy, Target, BookOpen, TrendingUp, 
   Users, ChevronRight, Loader2, 
@@ -10,48 +9,15 @@ import {
  
 import { motion, AnimatePresence  } from 'motion/react'; 
 
+import { useDashboardData } from '../pages/admin/data/DashboardData';
 
-// --- TYPES ---
-interface DashboardData {
-  university: string;
-  department: string;
-  overall: {
-    avg_score: number | null;
-    total_exams: number;
-    student_count?: number; // Only for Deans
-  };
-  by_competency: Array<{
-    competency_area__name: string;
-    average_score: number;
-  }>;
-  history: Array<{
-    id: number;
-    end_time: string;
-    score: number;
-    competency_area__name: string;
-  }>;
-}
 
 export function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading } = useDashboardData();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const response = await apiClient.get('/dashboard/');
-        setData(response.data);
-      } catch (error) {
-        console.error("Dashboard fetch error", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
+ 
 
   if (loading) {
     return (
@@ -92,14 +58,14 @@ export function AdminDashboard() {
             />
             <StatCard 
               label="Average Score" 
-              value={`${data?.overall.avg_score?.toFixed(1) || 0}%`} 
+              value={`${data?.overall.avg_score?.toFixed(0) || 0}%`} 
               icon={<Target className="text-indigo-600" />} 
               color="bg-indigo-50"
             />
             {isAdmin ? (
               <StatCard 
                 label="Total Students" 
-                value={data?.overall.student_count || 0} 
+                value={data?.student_count || 0} 
                 icon={<Users className="text-green-600" />} 
               />
             ) : (
