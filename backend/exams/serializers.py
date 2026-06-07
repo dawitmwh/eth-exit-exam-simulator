@@ -4,6 +4,7 @@ from .models import (
     QuestionOption, ExamAttempt, 
     ExamResponse
 )
+from django.db import transaction
 
 
 # We have two serializers for questions: One for teachers/admins with all details, and one for students that hides the correct answer and explanation.
@@ -140,3 +141,57 @@ class CompetencyAreaCreateSerializer(serializers.ModelSerializer):
         if dept is None:
             raise serializers.ValidationError({'department': 'Department context is required for creation.'})
         return CompetencyArea.objects.create(department=dept, **validated_data)
+
+
+class QuestionOptionWriteSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)  # optional for updates
+    class Meta:
+        model = QuestionOption
+        fields = ['id', 'option_text', 'is_correct']
+
+
+class QuestionCreateSerializer(serializers.ModelSerializer):
+    # Accept nested options when creating/updating
+    options = QuestionOptionWriteSerializer(many=True, required=False)
+
+    class Meta:
+        model = Question
+        fields = [
+            'id', 'competency_area', 'text', 'explanation', 'difficulty', 'options'
+        ]
+
+    def validate(self, attrs):
+        options = attrs.get('options', [])
+        # ensure at least one correct option when options provided
+        if options:
+            if not any(o.get('is_correct') for o in options):
+                raise serializers.ValidationError("At least one option must be marked as correct.")
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        options_data = validated_data.pop('options', [])
+        question = super().create(validated_data)
+        # create options
+        opts = []
+        for o in options_data:
+            opts.append(QuestionOption(question=question, option_text=o.get('option_text',''), is_correct=bool(o.get('is_correct'))))
+        if opts:
+            QuestionOption.objects.bulk_create(opts)
+        return question
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        options_data = validated_data.pop('options', None)
+        # update question fields
+        question = super().update(instance, validated_data)
+        if options_data is not None:
+            # simple strategy: remove existing options and recreate
+            # (alternatively could diff by id to update/insert/delete)
+            instance.options.all().delete()
+            opts = []
+            for o in options_data:
+                opts.append(QuestionOption(question=question, option_text=o.get('option_text',''), is_correct=bool(o.get('is_correct'))))
+            if opts:
+                QuestionOption.objects.bulk_create(opts)
+        return question

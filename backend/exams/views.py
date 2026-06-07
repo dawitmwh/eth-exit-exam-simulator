@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 
 from .serializers import (
-    CompetencyAreaSerializer, QuestionSerializer, 
+    CompetencyAreaSerializer, QuestionSerializer, QuestionCreateSerializer, 
     StudentQuestionSerializer, ExamResponseSerializer,
     ExamAttemptSerializer, QuestionSyncSerializer
 )
@@ -34,26 +34,17 @@ class CompetencyAreaViewSet(viewsets.ModelViewSet):
  
 # This is the main viewset for questions. It dynamically chooses which serializer to use based on the user's role. Admins and teachers get the full details, while students get a simplified version that hides the correct answer and explanation.
 class QuestionViewSet(viewsets.ModelViewSet):
-    queryset = Question.objects.all() 
-
-    def get_queryset(self):
-        user = self.request.user
-        tenant = self.request.tenant
-        # Only questions for ABC University + Department (http://ABC.localhost:8000/api/questions/)
-        queryset = Question.objects.filter(Q(competency_area__department__university=tenant) & Q(competency_area__department=user.department))
-
-        if user.role == 'STUDENT':
-                queryset = queryset.filter(competency_area__department=user.department)
-        
-        return queryset.select_related('competency_area').prefetch_related('options')
+    queryset = Question.objects.all()
 
     def get_serializer_class(self):
-        if self.request.user.role == 'ADMIN' or self.request.user.role == 'TEACHER':
-            print("CHOICE: Picking FULL QuestionSerializer")
-            return QuestionSerializer
-    
-        print("CHOICE: Picking STUDENT StudentQuestionSerializer")
-        return StudentQuestionSerializer
+        # use write serializer for create / update, read serializer otherwise
+        if self.action in ('create', 'update', 'partial_update'):
+            return QuestionCreateSerializer
+        return QuestionSerializer
+
+    # optional: restrict queryset or order, include related prefetches
+    def get_queryset(self):
+        return Question.objects.select_related('competency_area').prefetch_related('options').order_by('-id')
 
 # This viewset handles the exam attempts. It ensures that students can only see their own attempts, while teachers and admins can see all attempts. It also includes a custom action for submitting an exam, which processes the student's answers and calculates their score.
 class ExamAttemptViewSet(viewsets.ModelViewSet):
