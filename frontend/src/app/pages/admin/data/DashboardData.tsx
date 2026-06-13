@@ -32,6 +32,7 @@ export function useDashboardData() {
     try {
       const response = await apiClient.get('/dashboard/');
       setData(response.data);
+      console.log("Dashboard data refreshed:", response.data);
     } catch (err) {
       setError("Failed to sync dashboard data.");
       console.error(err);
@@ -44,5 +45,5 @@ export function useDashboardData() {
     refreshData();
   }, []);
 
-  return { data, loading, error, refreshData };
+  return { data, loading, error, refreshData, setData, setError };
 }

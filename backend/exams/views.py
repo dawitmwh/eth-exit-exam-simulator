@@ -28,7 +28,8 @@ class CompetencyAreaViewSet(viewsets.ModelViewSet):
         user = self.request.user
         # Use .annotate() to calculate the count in one single SQL query
         return CompetencyArea.objects.filter(department=user.department).annotate(
-            annotated_question_count=Count('questions')
+            annotated_question_count=Count('questions'),
+        
         )
 
  

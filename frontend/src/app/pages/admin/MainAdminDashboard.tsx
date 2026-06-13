@@ -120,12 +120,19 @@ export default function MainAdminDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                   {competencies.map((exam, index) => (
+                      <span key={index}>{exam.question_count}</span>
+                    ))}
+
+
                     {examsData.subjects.map((subject) => {
                       const count = examsData.questions.filter(q => q.subjectId === subject.id).length;
                       const percentage = totalQuestions > 0 ? (count / totalQuestions) * 100 : 0;
                       return (
                         <div key={subject.id} className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
+
+
                             <span className="font-medium">{subject.name}</span>
                             <span className="text-muted-foreground">{count} questions</span>
                           </div>

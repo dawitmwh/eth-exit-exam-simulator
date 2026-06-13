@@ -10,6 +10,12 @@ export interface Competency {
   department_name: string;
   duration_minutes: number;
   question_count: number;
+  
+  by_competency: Array<{
+    competency_area__name: string;
+    average_score: number;
+    question_count: number;
+  }>;
 }
 
 
@@ -23,7 +29,7 @@ export function ExamData() {
      try {
         const response = await apiClient.get('/competency-areas/');
         setCompetencies(response.data);
-        console.log("Loaded competencies:", response.data); 
+        console.log("Loaded competencies:", response.data.by_competency); 
       } catch (error) {
         console.error("Failed to load exams", error);
       } finally {

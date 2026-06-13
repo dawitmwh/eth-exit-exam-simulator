@@ -39,6 +39,7 @@ from core.views import (
     DepartmentViewSet, VoucherViewSet,
     DepartmentCompetencyAreasView,  # add this import
 )
+from core.webhook import ChapaWebhookView
 
 router = DefaultRouter()
 
@@ -64,4 +65,5 @@ urlpatterns = [
         DepartmentCompetencyAreasView.as_view(),
         name='dept-competency-areas'
     ),
+    path('payments/chapa-webhook/', ChapaWebhookView.as_view(), name='chapa-webhook'),
 ]

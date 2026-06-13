@@ -3,6 +3,7 @@ import apiClient from '../api/client';
 import { Ticket, Plus, Copy, Check, Download, Loader2, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+ 
 
 interface Voucher {
   id: number;
@@ -10,7 +11,9 @@ interface Voucher {
   department_name: string;
   is_redeemed: boolean;
   redeemed_by_email: string | null;
+  voucher_balance: number;
   created_at: string;
+
 }
 
 interface Department {
@@ -24,6 +27,7 @@ export function AdminVouchers() {
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsSubmitting] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+   
 
   // Form State
   const [batchCount, setBatchCount] = useState(10);
@@ -46,6 +50,7 @@ export function AdminVouchers() {
       setVouchers(vRes.data);
       setDepartments(dRes.data);
       setStats(sRes.data);
+      console.log("Voucher stats:", dRes.data);
 
     } catch (err) {
       toast.error("Failed to load voucher data");
@@ -65,7 +70,8 @@ export function AdminVouchers() {
         department_id: selectedDept
       });
       toast.success(`Generated ${batchCount} new vouchers!`);
-      fetchData(); // Refresh list
+      fetchData(); 
+     
     } catch (err) {
       toast.error("Generation failed");
     } finally {
@@ -89,9 +95,19 @@ export function AdminVouchers() {
         <p className="text-slate-500">Generate and track access codes for your students.</p>
       </header>
 
+      <div className="bg-indigo-900 text-white mb-4 p-6 rounded-3xl shadow-xl flex items-center justify-between">
+          <div>
+              <p className="text-xs font-bold opacity-70 uppercase tracking-widest">Vouchr Balance</p>
+              <p className="text-3xl font-black"> {stats?.voucher_balance || 0}</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-2xl">
+              <Ticket size={24} />
+          </div>
+      </div>
+
       {/* 1. ANALYTICS ROW */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-        <QuickStat label="Total Licenses" value={stats?.total} icon={<Ticket />} color="text-blue-600" />
+        <QuickStat label="Available Licenses" value={stats?.available_to_redeem|| 0} icon={<Ticket />} color="text-blue-600" />
         <QuickStat label="Students Joined" value={stats?.redeemed} color="text-green-600" />
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-center">
             <div className="flex justify-between items-center mb-2">

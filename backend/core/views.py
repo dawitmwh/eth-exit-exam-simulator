@@ -71,65 +71,113 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         serializer.save(university=self.request.tenant)
 
 
+import random
+import string
+from django.db import transaction
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import VoucherCode, Department
+from .serializers import VoucherCodeSerializer
+
 class VoucherViewSet(viewsets.ModelViewSet):
     serializer_class = VoucherCodeSerializer
 
-
     def get_queryset(self):
-        # SECURITY: Only see vouchers for the current university detected by middleware
+        # Only show vouchers for the current detected university
         return VoucherCode.objects.filter(university=self.request.tenant).order_by('-created_at')
-
 
     @action(detail=False, methods=['post'], url_path='generate')
     def generate(self, request):
-        # 1. Validation
+        # 1. AUTHENTICATION CHECK
         if request.user.role != 'ADMIN':
-            return Response({"error": "Unauthorized"}, status=403)
+            return Response({"error": "Only university administrators can generate vouchers."}, status=403)
 
-        count = int(request.data.get('count', 0))
-        dept_id = request.data.get('department_id')
-
-        if count <= 0 or count > 100: # Limit batch to 100 for safety
-            return Response({"error": "Select a count between 1 and 100"}, status=400)
-
-        # 2. Ensure department belongs to this university
+        # 2. DATA EXTRACTION
         try:
-            dept = Department.objects.get(id=dept_id, university=request.tenant)
+            count = int(request.data.get('count', 0))
+            dept_id = request.data.get('department_id')
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid count or department ID format."}, status=400)
+
+        university = request.tenant
+
+        # 3. VALIDATION: Check Batch Size
+        if count <= 0 or count > 100:
+            return Response({"error": "You can generate between 1 and 100 vouchers per batch."}, status=400)
+
+        # 4. VALIDATION: Check Available Credits (The Paid Model)
+        if count > university.voucher_balance:
+            return Response({
+                "error": "Insufficient credits.",
+                "voucher_balance": university.voucher_balance,
+                "requested": count,
+                "message": "Please contact system administration to purchase more student seats."
+            }, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+        # 5. VALIDATION: Check Department Ownership
+        try:
+            dept = Department.objects.get(id=dept_id, university=university)
         except Department.DoesNotExist:
-            return Response({"error": "Invalid department"}, status=400)
+            return Response({"error": "Selected department not found in your university portal."}, status=400)
 
-        # 3. Batch Generation
-        new_vouchers = []
-        for _ in range(count):
-            # Format: UNISLUG-RANDOM
-            random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-            code = f"{request.tenant.slug.upper()}-{random_suffix}"
-            
-            voucher = VoucherCode.objects.create(
-                university=request.tenant,
-                department=dept,
-                code=code
-            )
-            new_vouchers.append(VoucherCodeSerializer(voucher).data)
+        # 6. ATOMIC EXECUTION: Balance deduction + Voucher creation
+        try:
+            with transaction.atomic():
+                # A. Deduct the credits first
+                university.voucher_balance -= count
+                university.save()
 
-        return Response(new_vouchers, status=status.HTTP_201_CREATED)
-    
+                # B. Generate the random codes
+                new_vouchers = []
+                for _ in range(count):
+                    # Generate a clean code: SLUG-RANDOM (e.g., ARSI-XJ92L1)
+                    random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+                    code_str = f"{university.slug.upper()}-{random_suffix}"
+                    
+                    voucher = VoucherCode.objects.create(
+                        university=university,
+                        department=dept,
+                        code=code_str
+                    )
+                    new_vouchers.append(voucher)
+
+                # C. Serialize the newly created vouchers to return to React
+                serialized_data = VoucherCodeSerializer(new_vouchers, many=True).data
+
+                return Response({
+                    "message": f"Successfully generated {count} vouchers for {dept.name}.",
+                    "new_balance": university.voucher_balance,
+                    "vouchers": serialized_data
+                }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            # If anything goes wrong inside the 'with' block, the balance deduction is cancelled
+            print(f"DATABASE ERROR: {str(e)}")
+            return Response({"error": "A system error occurred. Credits were not deducted."}, status=500)
+   
     @action(detail=False, methods=['get'], url_path='analytics')
     def analytics(self, request):
         # 1. Calculate the numbers
-        total = VoucherCode.objects.filter(university=request.tenant).count()
-        redeemed = VoucherCode.objects.filter(university=request.tenant, is_redeemed=True).count()
+        vouchers_queryset = VoucherCode.objects.filter(university=request.tenant)
+        total = vouchers_queryset.count()
+        redeemed = vouchers_queryset.filter(is_redeemed=True).count()
+
+        # 2. Get the university's remaining "Bank Balance"
+        # This is what the Dean has paid for but NOT yet generated
+        remaining_credits = request.tenant.voucher_balance 
         
-        # 2. Use the Serializer we discussed
+        
         data = {
-            "total": total,
+            "total_generated": total,
             "redeemed": redeemed,
-            "available": total - redeemed,
+            "available_to_redeem": total - redeemed,
             "usage_rate": (redeemed / total * 100) if total > 0 else 0,
-            "departments": [] # You can add dept breakdown here later
+            "voucher_balance": remaining_credits,  
+            "departments": [] 
         }
         
-        # You can use the serializer here or return raw data for a quick test
+       
         return Response(data)
 
 class DepartmentCompetencyAreasView(APIView):
@@ -225,3 +273,25 @@ class DepartmentCompetencyAreasView(APIView):
         competency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class InitializePaymentView(APIView):
+    def post(self, request):
+        credits = int(request.data.get('credits', 0))
+        # Example pricing: 10 ETB per student seat
+        price_per_credit = 10 
+        amount = credits * price_per_credit
+
+        # 1. Initialize with Chapa
+        res_data, tx_ref = initialize_chapa_payment(request.tenant, amount, credits)
+
+        if res_data.get('status') == 'success':
+            # 2. Record the pending transaction
+            Transaction.objects.create(
+                university=request.tenant,
+                tx_ref=tx_ref,
+                amount=amount,
+                credits_purchased=credits
+            )
+            return Response({"checkout_url": res_data['data']['checkout_url']})
+        
+        return Response({"error": "Payment initialization failed"}, status=400)

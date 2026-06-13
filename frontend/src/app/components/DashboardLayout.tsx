@@ -7,8 +7,6 @@ import {
 } from 'lucide-react';
 
    
-
-
 export function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();

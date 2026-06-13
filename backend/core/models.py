@@ -5,12 +5,17 @@ from .thread_local import get_current_university
 class University(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True) 
+
+    voucher_balance = models.PositiveIntegerField(
+        default=0, 
+        help_text="Number of student seats available to generate vouchers for."
+    )
     logo = models.ImageField(upload_to='university_logos/', null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} (Balance: {self.voucher_balance})"
 
 
 class UniversityManager(models.Manager):
@@ -78,3 +83,22 @@ class VoucherCode(UniversityTenantModel):
 
     def __str__(self):
         return f"{self.code} ({self.university.slug})"
+
+
+class Transaction(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SUCCESS = 'SUCCESS', 'Successful'
+        FAILED = 'FAILED', 'Failed'
+
+    university = models.ForeignKey(University, on_delete=models.CASCADE)
+    # Chapa's reference ID (generate this)
+    tx_ref = models.CharField(max_length=100, unique=True) 
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    credits_purchased = models.PositiveIntegerField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.tx_ref} - {self.status}"
