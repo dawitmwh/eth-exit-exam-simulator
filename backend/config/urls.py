@@ -37,7 +37,9 @@ from exams.views import (
 from core.views import (
     RegisterUniversityView, CheckSlugView,
     DepartmentViewSet, VoucherViewSet,
-    DepartmentCompetencyAreasView,  # add this import
+    DepartmentCompetencyAreasView,   
+    TransactionHistoryView,
+    InitializePaymentView
 )
 from core.webhook import ChapaWebhookView
 
@@ -65,5 +67,7 @@ urlpatterns = [
         DepartmentCompetencyAreasView.as_view(),
         name='dept-competency-areas'
     ),
-    path('payments/chapa-webhook/', ChapaWebhookView.as_view(), name='chapa-webhook'),
+    path('api/payments/chapa-webhook/', ChapaWebhookView.as_view(), name='chapa-webhook'),
+    path('billing/history/', TransactionHistoryView.as_view(), name='billing-history'),
+    path('api/payments/initialize/', InitializePaymentView.as_view(), name='initialize-payment'),
 ]

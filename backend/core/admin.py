@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import University, Department, VoucherCode
+from .models import University, Department, VoucherCode, Transaction
+from django.contrib.admin import site
 
 
 @admin.register(University)
@@ -28,3 +29,10 @@ class VoucherCodeAdmin(admin.ModelAdmin):
         self.message_user(request, "Selected vouchers have been reset for testing!")
     
     reset_vouchers.short_description = "Reset selected vouchers for testing"
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ['university', 'tx_ref', 'amount', 'credits_purchased', 'status']
+    list_filter = ['status', 'university']
+    search_fields = ['tx_ref']

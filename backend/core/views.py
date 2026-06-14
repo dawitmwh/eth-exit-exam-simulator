@@ -1,7 +1,7 @@
 import string
 from django.shortcuts import render
 from rest_framework.views import APIView
-from .models import University, Department, VoucherCode
+from .models import University, Department, VoucherCode, Transaction
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import UniversityRegistrationSerializer, DepartmentSerializer, VoucherCodeSerializer
@@ -17,8 +17,10 @@ import random
 
 from exams.serializers import CompetencyAreaSerializer, CompetencyAreaCreateSerializer
 from exams.models import CompetencyArea
-from .models import Department
-
+from django.db import transaction
+from .serializers import TransactionSerializer
+import uuid
+import requests
 
 # Create your views here.
 
@@ -70,15 +72,6 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         # automatically link it to their University
         serializer.save(university=self.request.tenant)
 
-
-import random
-import string
-from django.db import transaction
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from .models import VoucherCode, Department
-from .serializers import VoucherCodeSerializer
 
 class VoucherViewSet(viewsets.ModelViewSet):
     serializer_class = VoucherCodeSerializer
@@ -277,15 +270,28 @@ class DepartmentCompetencyAreasView(APIView):
 class InitializePaymentView(APIView):
     def post(self, request):
         credits = int(request.data.get('credits', 0))
-        # Example pricing: 10 ETB per student seat
-        price_per_credit = 10 
+        price_per_credit = 20 # 20 ETB per student seat
         amount = credits * price_per_credit
+        tx_ref = f"TX-{uuid.uuid4().hex[:8].upper()}"
 
-        # 1. Initialize with Chapa
-        res_data, tx_ref = initialize_chapa_payment(request.tenant, amount, credits)
+        # 1. Prepare Chapa Payload
+        payload = {
+            "amount": str(amount),
+            "currency": "ETB",
+            "email": request.user.email,
+            "first_name": request.user.first_name,
+            "tx_ref": tx_ref,
+            "callback_url": "http://dmt.localhost:8000/api/payments/chapa-webhook/", # Update later
+            "return_url": f"http://{request.tenant.slug}.localhost:5173/admin/vouchers/?status=success",
+        }
+
+        # 2. Call Chapa (Use your TEST Secret Key)
+        headers = {"Authorization": "Bearer CHASECK_TEST-xxxxxxxxxxxx"}
+        response = requests.post("https://api.chapa.co/v1/transaction/initialize", json=payload, headers=headers)
+        res_data = response.json()
 
         if res_data.get('status') == 'success':
-            # 2. Record the pending transaction
+            # 3. Create a Pending Transaction record
             Transaction.objects.create(
                 university=request.tenant,
                 tx_ref=tx_ref,
@@ -294,4 +300,22 @@ class InitializePaymentView(APIView):
             )
             return Response({"checkout_url": res_data['data']['checkout_url']})
         
-        return Response({"error": "Payment initialization failed"}, status=400)
+        return Response({"error": "Chapa integration failed"}, status=400)
+
+
+class TransactionHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # 1. Role Check
+        if request.user.role != 'ADMIN':
+            return Response({"error": "Access denied. Admins only."}, status=403)
+
+        # 2. Filter by current University (Tenant)
+        transactions = Transaction.objects.filter(
+            university=request.tenant
+        ).order_by('-created_at')
+
+        # 3. Serialize and Return
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(serializer.data)

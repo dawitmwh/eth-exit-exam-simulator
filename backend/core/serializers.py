@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import University
+from .models import University, Transaction 
 from users.models import User, Department
 from .models import VoucherCode
 
@@ -51,4 +51,14 @@ class VoucherCodeSerializer(serializers.ModelSerializer):
         model = VoucherCode
         fields = ['id', 'code', 'department', 'department_name', 'is_redeemed', 'redeemed_by_email', 'redeemed_at', 'created_at']
 
-        
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    # Format ETB with 2 decimal places
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    # Format date for humans: "22 May 2026, 02:30 PM"
+    date = serializers.DateTimeField(source='created_at', format="%d %b %Y, %I:%M %p", read_only=True)
+
+    class Meta:
+        model = Transaction
+        fields = ['tx_ref', 'amount', 'credits_purchased', 'status', 'date']    

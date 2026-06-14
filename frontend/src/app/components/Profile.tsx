@@ -6,6 +6,9 @@ import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { toast }  from 'sonner';
+import apiClient from '../api/client';
+
 import {
   User,
   Mail,
@@ -34,6 +37,21 @@ export function Profile() {
     .join('')
     .toUpperCase()
     .slice(0, 2) || 'U';
+
+  const handleBuyCredits = async (requestedCredits: number) => {
+  try {
+    // 1. Call your Django InitializePaymentView
+    const res = await apiClient.post('api/payments/initialize/', {
+      credits: requestedCredits
+    });
+    
+    // 2. REDIRECT TO CHAPA
+    // This takes the user away from your site to the secure Chapa page
+    window.location.href = res.data.checkout_url;
+  } catch (err) {
+    toast.error("Could not initialize payment");
+  }
+};
 
   return (
     <div className="min-h-screen md:ml-64">
@@ -151,8 +169,7 @@ export function Profile() {
           <Button className="w-full mt-6" variant="outline">
             Manage Subscription
           </Button>
-        </Card>
-
+        </Card> 
         {/* Settings */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
