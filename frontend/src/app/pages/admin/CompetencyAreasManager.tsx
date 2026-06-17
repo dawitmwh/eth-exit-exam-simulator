@@ -64,6 +64,7 @@ export default function CompetencyAreasManager() {
             .catch(() => [])
         )
       );
+      
       const combined = lists.flat();
       setSubjects(combined);
     } catch (err) {

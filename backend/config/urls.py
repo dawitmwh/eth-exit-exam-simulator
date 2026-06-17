@@ -33,7 +33,6 @@ from exams.views import (
     CompetencyAreaViewSet, QuestionViewSet, 
     ExamAttemptViewSet
 )
-
 from core.views import (
     RegisterUniversityView, CheckSlugView,
     DepartmentViewSet, VoucherViewSet,
@@ -64,10 +63,10 @@ urlpatterns = [
     # Single endpoint for all methods on competency areas by department
     path(
         'api/departments/<int:dept_id>/competency-areas/',
-        DepartmentCompetencyAreasView.as_view(),
-        name='dept-competency-areas'
+          DepartmentCompetencyAreasView.as_view(),
+        name='department-competency-areas'
     ),
     path('api/payments/chapa-webhook/', ChapaWebhookView.as_view(), name='chapa-webhook'),
-    path('billing/history/', TransactionHistoryView.as_view(), name='billing-history'),
+    path('api/billing/history/', TransactionHistoryView.as_view(), name='billing-history'),
     path('api/payments/initialize/', InitializePaymentView.as_view(), name='initialize-payment'),
 ]

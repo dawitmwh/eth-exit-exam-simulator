@@ -1,15 +1,15 @@
 from django.db import models
-from core.models import Department
-from django.conf import settings # Use the Custom User Model
+from core.models import Department, ExamBook, University, UniversityTenantModel
+from django.conf import settings  
 
 # CompetencyArea is like a "subject" or "topic" that questions belong to, e.g., "Pharmacology" or "Structural Engineering"
 class CompetencyArea(models.Model):
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='competencies')
-    name = models.CharField(max_length=255) # e.g., "Pharmacology" or "Structural Engineering"
+    book = models.ForeignKey(ExamBook, on_delete=models.CASCADE, related_name='competencies')
+    name = models.CharField(max_length=255) # e.g., "Pharmacology"  
     duration_minutes = models.IntegerField(default=60)
 
     def __str__(self):
-        return f"{self.name} ({self.department.name})"
+        return f"{self.name} ({self.book.title})"
 
 # Question is the core model representing each exam question. It links to a CompetencyArea and has multiple options.    
 class Question(models.Model):
@@ -22,6 +22,8 @@ class Question(models.Model):
     text = models.TextField()
     explanation = models.TextField(help_text="Shown after the exam for learning")
     difficulty = models.CharField(max_length=10, choices=Difficulty.choices, default=Difficulty.MEDIUM)
+    university = models.ForeignKey(University, on_delete=models.SET_NULL, null=True, blank=True)
+    is_global = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -39,7 +41,7 @@ class QuestionOption(models.Model):
         return f"{self.question.text[:20]} - {self.option_text}"
 
 # ExamAttempt represents a user's attempt at taking an exam for a specific competency area. It tracks the start/end time, score, and status.
-class ExamAttempt(models.Model):
+class ExamAttempt(UniversityTenantModel):
     class Status(models.TextChoices):
         STARTED = 'STARTED', 'Started'
         COMPLETED = 'COMPLETED', 'Completed'
@@ -54,6 +56,7 @@ class ExamAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.competency_area.name} ({self.status})"
+        
 
 # ExamResponse represents the user's answer to each question in an attempt. It links to the selected option and whether it was correct.
 class ExamResponse(models.Model):

@@ -1,6 +1,19 @@
 from django.db import models
 import uuid
 from .thread_local import get_current_university
+from django.core.exceptions import ImproperlyConfigured
+from contextvars import ContextVar
+
+
+# This stores the tenant in the current thread/async task
+_current_university = ContextVar('current_university', default=None)
+
+def get_current_university():
+    return _current_university.get()
+
+def set_current_university(uni):
+    _current_university.set(uni)
+
 
 class University(models.Model):
     name = models.CharField(max_length=255)
@@ -46,8 +59,18 @@ class UniversityTenantModel(models.Model):
 
 
 class Department(UniversityTenantModel):
-    # Overriding related_name explicitly
+    class Category(models.TextChoices):
+        MANAGEMENT = 'MGMT', 'Management'
+        MARKETING = 'MMGMT', 'Marketing'
+        ACCOUNTING = 'ACC', 'Accounting and Finance'
     name = models.CharField(max_length=255)
+
+    # Use the Choices here to prevent typos identifiers of departments across the system
+    category = models.CharField(
+        max_length=50, 
+        choices=Category.choices,
+        db_index=True 
+    ) 
 
     class Meta:
         # Crucial for index performance across a single schema
@@ -59,6 +82,32 @@ class Department(UniversityTenantModel):
 
 def generate_voucher_code():
     return uuid.uuid4().hex[:12].upper()
+
+
+class ExamBook(models.Model):
+    """The Master Library: A collection of subjects for a specific field."""
+    title = models.CharField(max_length=255) # e.g., "National Nursing Mock 2026"
+    
+    # This category links the Book to a Department (e.g., 'NURSING')
+    category = models.CharField(max_length=100, db_index=True) 
+    
+    description = models.TextField(blank=True)
+    is_premium = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+
+class UniversityBookSubscription(models.Model):
+    """The link table between a University and an Exam Book."""
+    university = models.ForeignKey('University', on_delete=models.CASCADE)
+    book = models.ForeignKey(ExamBook, on_delete=models.CASCADE)
+    unlocked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('university', 'book')
+        verbose_name_plural = "University Book Subscriptions"
 
     
 class VoucherCode(UniversityTenantModel):

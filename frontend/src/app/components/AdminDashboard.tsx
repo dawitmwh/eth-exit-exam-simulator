@@ -43,7 +43,7 @@ export function AdminDashboard() {
           {/* Welcome Section */}
           <section>
             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900">
-              {isAdmin ? `${user?.university_name}` : `Welcome back, ${user?.email}! 👋`}
+              {isAdmin ? `${user?.university_name}` : `Welcome back, ${user?.email}!`}
             </h2>
             <p className="text-slate-500 mt-1">Here is what's happening with your preparation.</p>
           </section>

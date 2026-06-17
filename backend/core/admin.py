@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import University, Department, VoucherCode, Transaction
+from .models import University, Department, VoucherCode, Transaction, ExamBook, UniversityBookSubscription
 from django.contrib.admin import site
 
 
@@ -36,3 +36,17 @@ class TransactionAdmin(admin.ModelAdmin):
     list_display = ['university', 'tx_ref', 'amount', 'credits_purchased', 'status']
     list_filter = ['status', 'university']
     search_fields = ['tx_ref']
+
+
+@admin.register(ExamBook)
+class ExamBookAdmin(admin.ModelAdmin):
+    list_display = ['title', 'category', 'is_premium', 'created_at']
+    list_filter = ['is_premium', 'category']
+    search_fields = ['title']
+
+
+@admin.register(UniversityBookSubscription)
+class UniversityBookSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ['university', 'book', 'unlocked_at']
+    list_filter = ['university', 'book']
+    search_fields = ['university__name', 'book__title']

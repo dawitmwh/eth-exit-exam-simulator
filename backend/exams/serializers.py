@@ -23,14 +23,14 @@ class StudentQuestionSerializer(serializers.ModelSerializer):
         fields = ['id', 'competency_area', 'text', 'options'] 
 
 
-# Serializer for teachers/admins: Shows all fields including the correct answer and explanation.
 class CompetencyAreaSerializer(serializers.ModelSerializer):
-    question_count = serializers.IntegerField(source='annotated_question_count', read_only=True)    
-    department_name = serializers.CharField(source='department.name', read_only=True)
+    # Pull data from the parent book
+    book_title = serializers.CharField(source='book.title', read_only=True)
+    question_count = serializers.IntegerField(source='annotated_question_count', read_only=True)
 
     class Meta:
         model = CompetencyArea
-        fields = ['id', 'name', 'department', 'duration_minutes', 'question_count', 'department_name']
+        fields = ['id', 'name', 'book_title', 'duration_minutes', 'question_count']
 
     def get_question_count(self, obj):
         return obj.questions.count()
@@ -105,9 +105,11 @@ class AnswerSubmissionSerializer(serializers.Serializer):
 
 
 class SyncOptionSerializer(serializers.ModelSerializer):
+    is_standard = serializers.BooleanField(source='is_global', read_only=True)
+
     class Meta:
         model = QuestionOption
-        fields = ['id', 'option_text', 'is_correct']
+        fields = ['id', 'text', 'explanation', 'difficulty', 'options', 'is_standard']
         
 
 class QuestionSyncSerializer(serializers.ModelSerializer):
@@ -195,3 +197,5 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
             if opts:
                 QuestionOption.objects.bulk_create(opts)
         return question
+        
+

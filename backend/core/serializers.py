@@ -36,11 +36,11 @@ class UniversityRegistrationSerializer(serializers.ModelSerializer):
 
         return university
 
+
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ['id', 'name']     
-
 
 
 class VoucherCodeSerializer(serializers.ModelSerializer):
@@ -50,7 +50,6 @@ class VoucherCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoucherCode
         fields = ['id', 'code', 'department', 'department_name', 'is_redeemed', 'redeemed_by_email', 'redeemed_at', 'created_at']
-
 
 
 class TransactionSerializer(serializers.ModelSerializer):

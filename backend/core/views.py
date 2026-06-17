@@ -1,7 +1,7 @@
 import string
 from django.shortcuts import render
 from rest_framework.views import APIView
-from .models import University, Department, VoucherCode, Transaction
+from .models import University, Department, VoucherCode, Transaction, ExamBook, UniversityBookSubscription
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import UniversityRegistrationSerializer, DepartmentSerializer, VoucherCodeSerializer
@@ -14,13 +14,15 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 import random
-
 from exams.serializers import CompetencyAreaSerializer, CompetencyAreaCreateSerializer
 from exams.models import CompetencyArea
 from django.db import transaction
 from .serializers import TransactionSerializer
 import uuid
 import requests
+from django.db.models import Count
+
+
 
 # Create your views here.
 
@@ -81,6 +83,7 @@ class VoucherViewSet(viewsets.ModelViewSet):
         return VoucherCode.objects.filter(university=self.request.tenant).order_by('-created_at')
 
     @action(detail=False, methods=['post'], url_path='generate')
+    @transaction.atomic
     def generate(self, request):
         # 1. AUTHENTICATION CHECK
         if request.user.role != 'ADMIN':
@@ -90,6 +93,16 @@ class VoucherViewSet(viewsets.ModelViewSet):
         try:
             count = int(request.data.get('count', 0))
             dept_id = request.data.get('department_id')
+            dept = get_object_or_404(Department, id=dept_id, university=request.tenant)
+            matching_book = ExamBook.objects.filter(category=dept.category).first()
+        
+            if matching_book:
+                # Grant the university access to this book if they don't have it
+                UniversityBookSubscription.objects.get_or_create(
+                    university=request.tenant,
+                    book=matching_book
+                )
+
         except (ValueError, TypeError):
             return Response({"error": "Invalid count or department ID format."}, status=400)
 
@@ -198,10 +211,28 @@ class DepartmentCompetencyAreasView(APIView):
             return dict(request.data or {})
 
     def get(self, request, dept_id):
-        dept = self._get_department(request, dept_id)
-        qs = CompetencyArea.objects.filter(department=dept).order_by('name')
-        serializer = CompetencyAreaSerializer(qs, many=True, context={'request': request})
+        # 1. SECURITY: Find the department belonging to the CURRENT tenant (University)
+        # This prevents someone from AAU from viewing Damat's departments
+        department = get_object_or_404(
+            Department, 
+            id=dept_id, 
+            university=request.tenant
+        )
+
+        # 2. THE BRIDGE LOGIC: 
+        # Find all CompetencyAreas that belong to Books matching this department's category
+        competency_areas = CompetencyArea.objects.filter(
+            book__category=department.category
+        ).annotate(
+            # Re-including the question count for the React cards
+            annotated_question_count=Count('questions')
+        )
+
+        # 3. Serialize and Return
+        serializer = CompetencyAreaSerializer(competency_areas, many=True)
         return Response(serializer.data)
+
+
 
     def post(self, request, dept_id):
         dept = self._get_department(request, dept_id)
@@ -266,7 +297,6 @@ class DepartmentCompetencyAreasView(APIView):
         competency.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
 class InitializePaymentView(APIView):
     def post(self, request):
         credits = int(request.data.get('credits', 0))
@@ -301,7 +331,6 @@ class InitializePaymentView(APIView):
             return Response({"checkout_url": res_data['data']['checkout_url']})
         
         return Response({"error": "Chapa integration failed"}, status=400)
-
 
 class TransactionHistoryView(APIView):
     permission_classes = [IsAuthenticated]
