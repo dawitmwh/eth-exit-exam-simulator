@@ -8,6 +8,9 @@ interface User {
   role: string;
   department_name: string;
   university_name: string;
+  university_logo: string | null;
+  is_staff: boolean;
+  is_superuser: boolean;
 }
 
 interface AuthContextType {
@@ -16,6 +19,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, voucherCode: string) => Promise<any>;
   logout: () => void;
   isLoading: boolean;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +27,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     const syncSession = async () => {
@@ -107,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

@@ -9,12 +9,18 @@ class User(AbstractUser):
         ADMIN = 'ADMIN', 'Admin'
 
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=10, choices=Role.choices, default=Role.STUDENT)
+    role = models.CharField(max_length=50, choices=Role.choices, default=Role.STUDENT)
     
     # SaaS Links
     university = models.ForeignKey(University, on_delete=models.SET_NULL, null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
-
+    classroom = models.ForeignKey(
+        'core.Classroom', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='students'
+    )
     # Use email as the primary login field instead of username
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username'] 

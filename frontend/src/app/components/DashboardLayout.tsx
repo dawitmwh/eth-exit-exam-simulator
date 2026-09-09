@@ -3,7 +3,8 @@ import { Outlet, useNavigate, useLocation, Link } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Trophy, BookOpen, Users, Ticket, 
-  LayoutDashboard, LogOut, Menu, X, User as UserIcon 
+  LayoutDashboard, LogOut, Menu, X, User as UserIcon, 
+  Upload
 } from 'lucide-react';
 
    
@@ -14,21 +15,28 @@ export function DashboardLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isAdmin = user?.role === 'ADMIN';
+  const isTeacher = user?.role === 'TEACHER';
 
   const navItems = [
     { label: 'Overview', path: '/', icon: LayoutDashboard, show: true },
     { label: 'Practice Exams', path: '/exams', icon: BookOpen, show: true },
     { label: 'Vouchers', path: '/admin/vouchers', icon: Ticket, show: isAdmin },
     { label: 'Departments', path: '/admin/departments', icon: Users, show: isAdmin },
+    { 
+    label: 'Upload Questions', 
+    path: '/admin/upload', 
+    icon: Upload, 
+    show: isAdmin || isTeacher  
+  },
   ];
 
   return (
     <div className="min-h-screen bg-slate-50">
       {/* SIDEBAR FOR DESKTOP */}
-      <aside className="fixed inset-y-0 left-0 hidden md:flex w-64 flex-col bg-indigo-950 text-white">
+      <aside className="fixed inset-y-0 left-0 hidden md:flex w-64 flex-col bg-primary text-white">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10">
-            <Trophy className="text-indigo-400" />
+            <Trophy className="text-primary" />
             <span className="text-xl font-bold">Exit Examiner</span>
           </div>
           
@@ -78,7 +86,7 @@ export function DashboardLayout() {
 
         {/* PAGE CONTENT */}
         <div className="flex-1">
-          <Outlet /> {/* CRITICAL: This is where Dashboard/Vouchers appear */}
+          <Outlet /> {/* This is where Dashboard/Vouchers appear */}
         </div>
       </main>
     </div>

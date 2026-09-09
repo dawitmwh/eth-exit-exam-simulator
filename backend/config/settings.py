@@ -12,21 +12,56 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import environ
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, True)
+)
+
+# Set the project base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# --- NOW USE THE VARIABLES ---
+SECRET_KEY = env('SECRET_KEY')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-vnni_tbr=u@0!lr(jdbw^r1wzf2=c5wu*bsjyxjp^hnq(!q=$d'
+CHAPA_URL = env('CHAPA_URL')  # Use the environment variable for Chapa URL
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Chapa Key
+CHAPA_SECRET_KEY = env('CHAPA_SECRET_KEY')
 
-ALLOWED_HOSTS = []
+print("CHAPA_URL:", CHAPA_URL)
+print("DEBUG: CHAPA KEY EXISTS:", bool(CHAPA_SECRET_KEY))
+
+if CHAPA_SECRET_KEY:
+    print("DEBUG: CHAPA KEY PREFIX:", CHAPA_SECRET_KEY[:15])
+
+
+BASE_URL_DOMAIN = env('BASE_URL_DOMAIN')
+
+print("DEBUG: BASE_URL_DOMAIN:", BASE_URL_DOMAIN)
+
+DEBUG = env('DEBUG')
+# Handle Wildcard Subdomains safely
+
+# 1. Allow the pinggy domain to hit your server
+# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '.localhost'])
+# Add the specific pinggy domain from your terminal output here
+#ALLOWED_HOSTS.append('https://jpdpq-196-190-157-91.run.pinggy-free.link') 
+
+ALLOWED_HOSTS = ['*']
+
+# 2. CRITICAL for Webhooks: Allow CSRF for the external domain
+CSRF_TRUSTED_ORIGINS = [
+    'https://gavdv-196-190-157-91.run.pinggy-free.link',
+    'https://*.pinggy.link',
+    'https://*.pinggy-free.link',
+    'http://localhost:5173',
+]
 
 
 # Application definition
@@ -86,7 +121,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -104,12 +139,33 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database configuration
+
+print(f"DEBUG {env('DEBUG')}")
+# sq_name = env('SQLITE_DB_NAME')
+
+if env('DEBUG'):
+    print(f"DEBUG  is TRUE")
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+
+else: 
+    print(f"DEBUG  is FALSE")
+    DATABASES = {
+        'default': env.db(), # This automatically parses DATABASE_URL
+    }
+
+
+
+
+
+
+
 
 
 # Password validation
@@ -147,6 +203,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# 3. (Optional) If you have a global 'static/' folder for your own CSS/Images
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static'),
+# ]
+
+# The URL the browser uses
+MEDIA_URL = '/media/'
+
+# The actual path
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

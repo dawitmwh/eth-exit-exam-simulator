@@ -3,6 +3,7 @@ import uuid
 from .thread_local import get_current_university
 from django.core.exceptions import ImproperlyConfigured
 from contextvars import ContextVar
+import random, string
 
 
 # This stores the tenant in the current thread/async task
@@ -18,12 +19,17 @@ def set_current_university(uni):
 class University(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(unique=True) 
-
+    logo = models.ImageField(upload_to='university-logos/', null=True, blank=True)
     voucher_balance = models.PositiveIntegerField(
         default=0, 
         help_text="Number of student seats available to generate vouchers for."
     )
-    logo = models.ImageField(upload_to='university_logos/', null=True, blank=True)
+    primary_color = models.CharField(
+        max_length=7, 
+        default='#4f46e5', # Default Indigo
+        help_text="Hex code for the university's primary brand color (e.g. #FF0000)"
+    )
+    
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -111,7 +117,7 @@ class UniversityBookSubscription(models.Model):
 
     
 class VoucherCode(UniversityTenantModel):
-    code = models.CharField(max_length=12, default=generate_voucher_code)
+    code = models.CharField(max_length=50, default=generate_voucher_code)
     # Department must be under the same university context
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     is_redeemed = models.BooleanField(default=False)
@@ -145,9 +151,35 @@ class Transaction(models.Model):
     tx_ref = models.CharField(max_length=100, unique=True) 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     credits_purchased = models.PositiveIntegerField()
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=50, choices=Status.choices, default=Status.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    objects = UniversityManager() 
+    unscoped_objects = models.Manager()
 
     def __str__(self):
         return f"{self.tx_ref} - {self.status}"
+
+
+class Classroom(UniversityTenantModel):
+    name = models.CharField(max_length=100) # e.g., "Section B - Clinical Nursing"
+    code = models.CharField(max_length=50, unique=True, editable=False)
+    
+    # The teacher who 'owns' this group
+    teacher = models.ForeignKey(
+        'users.User', 
+        on_delete=models.CASCADE, 
+        related_name='managed_classrooms'
+    )
+    
+    department = models.ForeignKey('core.Department', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            # Generate a unique 6-character classroom code
+            self.code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"

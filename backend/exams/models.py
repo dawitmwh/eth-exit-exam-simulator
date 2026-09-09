@@ -48,14 +48,16 @@ class ExamAttempt(UniversityTenantModel):
         TIMED_OUT = 'TIMED_OUT', 'Timed Out'
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    competency_area = models.ForeignKey(CompetencyArea, on_delete=models.CASCADE) # Or link to an "Exam" model if you have one
+    competency_area = models.ForeignKey(CompetencyArea, on_delete=models.CASCADE, null=True, blank=True) # Or link to an "Exam" model if you have one
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
+    correct_answers = models.PositiveIntegerField(default=0)
+    total_questions = models.PositiveIntegerField(default=0)
     score = models.FloatField(default=0.0)
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.STARTED)
 
     def __str__(self):
-        return f"{self.user.email} - {self.competency_area.name} ({self.status})"
+        return f"{self.user.email}  - ({self.status})"
         
 
 # ExamResponse represents the user's answer to each question in an attempt. It links to the selected option and whether it was correct.

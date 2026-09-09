@@ -28,6 +28,7 @@ export function ExamData() {
     setLoading(true);
      try {
         const response = await apiClient.get('/competency-areas/');
+        console.log("Exam Data", response.data)
         setCompetencies(response.data);
         console.log("Loaded competencies:", response.data); 
       } catch (error) {

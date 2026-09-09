@@ -1,24 +1,56 @@
 // src/api/client.ts
 import axios from 'axios';
 
+// const getBackendUrl = () => {
+//   const { hostname, protocol } = window.location;
+  
+//   // Local development handling (e.g., aau.localhost:3000 -> aau.localhost:8000)
+//   if (hostname.includes('localhost')) {
+//     const subdomain = hostname.split('.')[0];
+//     return `${protocol}//${subdomain}.localhost:8000/api/`;
+//   }
+  
+//   // Production handling (e.g., aau.company.com -> aau.api.company.com)
+//   const parts = hostname.split('.');
+//   if (parts.length > 2) {
+//     const subdomain = parts[0];
+//     const domain = parts.slice(1).join('.');
+//     return `${protocol}//${subdomain}.api.${domain}/api/`;
+//   }
+
+//   return 'http://127.0.0.1:8000/api/';
+// };
+
+// const apiClient = axios.create({
+//   baseURL: getBackendUrl(),
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
 const getBackendUrl = () => {
   const { hostname, protocol } = window.location;
   
-  // Local development handling (e.g., aau.localhost:3000 -> aau.localhost:8000)
-  if (hostname.includes('localhost')) {
-    const subdomain = hostname.split('.')[0];
-    return `${protocol}//${subdomain}.localhost:8000/api/`;
-  }
-  
-  // Production handling (e.g., aau.company.com -> aau.api.company.com)
+  // 1. Get patterns from Environment Variables
+  const urlTemplate = import.meta.env.VITE_API_URL_TEMPLATE || "{subdomain}.localhost:8000/api";
+  const rootApi = import.meta.env.VITE_ROOT_API_URL || "localhost:8000/api";
+
+  // 2. Identify the Subdomain
   const parts = hostname.split('.');
-  if (parts.length > 2) {
+  
+  // Check if we are on a subdomain (e.g., 'aau.localhost' or 'aau.exitprep.et')
+  // We ignore 'www', 'localhost', and IP addresses
+  const isSubdomain = parts.length > 1 && !['www', 'localhost', '127'].includes(parts[0]);
+
+  if (isSubdomain) {
     const subdomain = parts[0];
-    const domain = parts.slice(1).join('.');
-    return `${protocol}//${subdomain}.api.${domain}/api/`;
+    // Replace the placeholder with the actual subdomain detected in the browser
+    const formattedUrl = urlTemplate.replace('{subdomain}', subdomain);
+    return `${protocol}//${formattedUrl}/`;
   }
 
-  return 'http://127.0.0.1:8000/api/';
+  // 3. Fallback: If no subdomain (Root Domain), use the Root API path
+  return `${protocol}//${rootApi}/`;
 };
 
 const apiClient = axios.create({
@@ -27,6 +59,8 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+ 
+
 // Paths that MUST NEVER have tokens attached or trigger 401 refresh interceptors
 const bypassUrls = ['token/', 'users/register/', 'tenant/config/'];
 

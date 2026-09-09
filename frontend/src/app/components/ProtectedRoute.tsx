@@ -8,7 +8,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const hasToken = Boolean(localStorage.getItem('access_token'));
 
   if (isLoading) {
-    return <div className="h-screen w-screen flex items-center justify-center bg-slate-950 text-white">Loading Auth...</div>;
+    return <div className="h-screen w-screen flex items-center justify-center bg-primary text-white">Loading Auth...</div>;
   }
 
   // Require both a valid user object AND a token. If either is missing, redirect to login.

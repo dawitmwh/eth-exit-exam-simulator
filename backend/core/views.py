@@ -1,10 +1,22 @@
 import string
 from django.shortcuts import render
 from rest_framework.views import APIView
-from .models import University, Department, VoucherCode, Transaction, ExamBook, UniversityBookSubscription
+from .models import (
+    University, 
+    Department, 
+    VoucherCode,
+    Transaction,
+    ExamBook, 
+    UniversityBookSubscription
+)
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UniversityRegistrationSerializer, DepartmentSerializer, VoucherCodeSerializer
+
+from .serializers import (
+    UniversityRegistrationSerializer, 
+    DepartmentSerializer, 
+    VoucherCodeSerializer
+)
 from django.db import transaction
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -14,15 +26,42 @@ from rest_framework import status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 import random
-from exams.serializers import CompetencyAreaSerializer, CompetencyAreaCreateSerializer
+
+from exams.serializers import (
+    CompetencyAreaSerializer, 
+    CompetencyAreaCreateSerializer 
+)
 from exams.models import CompetencyArea
 from django.db import transaction
-from .serializers import TransactionSerializer
+
+from .serializers import (
+    TransactionSerializer, 
+    ExamBookSerializer, 
+    SaaSUniversitySerializer, 
+    ClassroomSerializer
+)
 import uuid
 import requests
-from django.db.models import Count
+from django.db.models import Count, Sum, Avg
+
+from .models import (
+    University, 
+    Transaction, 
+    ExamBook,
+    UniversityBookSubscription, 
+    Classroom
+)
+from users.models import User
+from django.db import models
+from rest_framework.decorators import action
+from .services import initialize_chapa_payment
+from django.conf import settings
+import traceback  
+ 
 
 
+CHAPA_SECRET_KEY = settings.CHAPA_SECRET_KEY
+CHAPA_URL = 'https://api.chapa.co/v1/transaction/initialize'
 
 # Create your views here.
 
@@ -40,40 +79,79 @@ class CheckSlugView(APIView):
             "message": "Available" if not exists else "This subdomain is already taken."
         })
 
-
 class RegisterUniversityView(APIView):
-    # This must be public so new Deans can sign up
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = UniversityRegistrationSerializer(data=request.data)
+         
         if serializer.is_valid():
             try:
                 with transaction.atomic():
+                    # 1. Capture the chosen package from request
+                    package_type = request.data.get('package')
+                    admin_email = request.data.get('admin_email') # Needed for Chapa
+                    
+                    # 2. Save University and User
                     uni = serializer.save()
-                    return Response({
-                        "message": "University and Admin account created!",
-                        "slug": uni.slug,
-                        "portal_url": f"http://{uni.slug}.localhost:5173/login"
-                    }, status=status.HTTP_201_CREATED)
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
- 
 
+                    checkout_url = None
+                    
+                    # 3. Handle Payment if package selected
+                    if package_type:
+                        pricing = {
+                            'starter': {'amt': 1000, 'creds': 50},
+                            'standard': {'amt': 4500, 'creds': 250},
+                            'university': {'amt': 15000, 'creds': 1000},
+                        }
+                        pkg = pricing.get(package_type)
+                        
+                        if pkg:
+                            # IMPORTANT: res_data and tx_ref must be unpacked correctly
+                            res_data, tx_ref = initialize_chapa_payment(
+                                uni, 
+                                pkg['amt'], 
+                                pkg['creds'], 
+                                admin_email # Ensure this variable exists!
+                            )
+                            
+                            if res_data and res_data.get('status') == 'success':
+                                Transaction.objects.create(
+                                    university=uni,
+                                    tx_ref=tx_ref,
+                                    amount=pkg['amt'],
+                                    credits_purchased=pkg['creds'],
+                                    status='PENDING'
+                                )
+                                checkout_url = res_data['data']['checkout_url']
+                            else:
+                                # Log Chapa rejection but don't crash the whole signup
+                                print(f"⚠️ Chapa Rejection: {res_data}")
+
+                    return Response({
+                        "message": "University created successfully",
+                        "portal_url": f"http://{uni.slug}.localhost:5173/login",
+                        "checkout_url": checkout_url
+                    }, status=201)
+
+            except Exception as e:
+                # THIS IS THE CRITICAL PART: Print the real error to your terminal
+                print("🔥 REGISTRATION CRASHED!")
+                print(traceback.format_exc()) 
+                return Response({"error": f"Internal Server Error: {str(e)}"}, status=500)
+        
+        return Response(serializer.errors, status=400)
+        
 class DepartmentViewSet(viewsets.ModelViewSet):
     serializer_class = DepartmentSerializer
 
     def get_queryset(self):
-        # SECURITY: A Dean only sees departments in their own University
+        # Only show departments for the current detected university
         return Department.objects.filter(university=self.request.tenant)
 
     def perform_create(self, serializer):
-        # AUTOMATION: When a Dean creates a department, 
-        # automatically link it to their University
+        # Automatically associate the new department with the current university
         serializer.save(university=self.request.tenant)
-
 
 class VoucherViewSet(viewsets.ModelViewSet):
     serializer_class = VoucherCodeSerializer
@@ -150,6 +228,7 @@ class VoucherViewSet(viewsets.ModelViewSet):
 
                 # C. Serialize the newly created vouchers to return to React
                 serialized_data = VoucherCodeSerializer(new_vouchers, many=True).data
+                 
 
                 return Response({
                     "message": f"Successfully generated {count} vouchers for {dept.name}.",
@@ -298,39 +377,40 @@ class DepartmentCompetencyAreasView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class InitializePaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        credits = int(request.data.get('credits', 0))
-        price_per_credit = 20 # 20 ETB per student seat
-        amount = credits * price_per_credit
-        tx_ref = f"TX-{uuid.uuid4().hex[:8].upper()}"
-
-        # 1. Prepare Chapa Payload
-        payload = {
-            "amount": str(amount),
-            "currency": "ETB",
-            "email": request.user.email,
-            "first_name": request.user.first_name,
-            "tx_ref": tx_ref,
-            "callback_url": "http://dmt.localhost:8000/api/payments/chapa-webhook/", # Update later
-            "return_url": f"http://{request.tenant.slug}.localhost:5173/admin/vouchers/?status=success",
-        }
-
-        # 2. Call Chapa (Use your TEST Secret Key)
-        headers = {"Authorization": "Bearer CHASECK_TEST-xxxxxxxxxxxx"}
-        response = requests.post("https://api.chapa.co/v1/transaction/initialize", json=payload, headers=headers)
-        res_data = response.json()
-
-        if res_data.get('status') == 'success':
-            # 3. Create a Pending Transaction record
-            Transaction.objects.create(
-                university=request.tenant,
-                tx_ref=tx_ref,
-                amount=amount,
-                credits_purchased=credits
+        try:
+            credits = int(request.data.get('credits', 0))
+            amount = credits * 20 # 20 ETB per seat
+            
+            # --- THE CRITICAL UNPACKING FIX ---
+            # We must use two variables here to unpack the tuple
+            res_data, tx_ref = initialize_chapa_payment(
+                request.tenant,
+                amount,
+                credits,
+                request.user.email
             )
-            return Response({"checkout_url": res_data['data']['checkout_url']})
-        
-        return Response({"error": "Chapa integration failed"}, status=400)
+
+            # Now res_data is the DICTIONARY, so .get() will work!
+            if res_data.get('status') == 'success':
+                Transaction.objects.create(
+                    university=request.tenant,
+                    tx_ref=tx_ref,
+                    amount=amount,
+                    credits_purchased=credits,
+                    status='PENDING'
+                )
+                return Response({"checkout_url": res_data['data']['checkout_url']})
+
+            # If Chapa says no
+            print(f"❌ CHAPA REJECTED: {res_data}")
+            return Response({"error": res_data.get('message', 'Initialization failed')}, status=400)
+
+        except Exception as e:
+            print(f"🔥 SYSTEM ERROR: {str(e)}")
+            return Response({"error": "Internal server error during payment init."}, status=500)
 
 class TransactionHistoryView(APIView):
     permission_classes = [IsAuthenticated]
@@ -348,3 +428,228 @@ class TransactionHistoryView(APIView):
         # 3. Serialize and Return
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
+
+class SaaSGlobalStatsView(APIView):
+    # Only you (The SaaS Owner) can see this
+    permission_classes = [IsAuthenticated] # We will add a SuperUser check next
+
+    def get(self, request):
+        if not request.user.is_superuser:
+            return Response({"error": "SaaS Owner access required."}, status=403)
+
+        # 1. Financial Stats
+        total_revenue = Transaction.objects.filter(status='SUCCESS').aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        # 2. Institutional Stats
+        total_unis = University.objects.count()
+        active_unis = University.objects.filter(is_active=True).count()
+
+        # 3. User Stats
+        total_students = User.objects.filter(role='STUDENT').count()
+
+        return Response({
+            "revenue": float(total_revenue),
+            "institutions": {
+                "total": total_unis,
+                "active": active_unis
+            },
+            "users": {
+                "total_students": total_students
+            }
+        })
+
+class SaaSUniversityListView(APIView):
+    def get(self, request):
+        if not request.user.is_superuser:
+            return Response(status=403)
+
+        # We want to see: Name, Slug, Student Count, Total Revenue per Uni
+        unis = University.objects.annotate(
+            student_count=Count('user', filter=models.Q(user__role='STUDENT')),
+            total_revenue=Sum('transaction__amount', filter=models.Q(transaction__status='SUCCESS'))
+        ).order_by('-created_at')
+
+        data = [{
+            "id": u.id,
+            "name": u.name,
+            "slug": u.slug,
+            "is_active": u.is_active,
+            "balance": u.voucher_balance,
+            "students": u.student_count,
+            "revenue": float(u.total_revenue or 0)
+        } for u in unis]
+
+        return Response(data)
+
+class MasterExamBookViewSet(viewsets.ModelViewSet):
+    # Only you can touch this
+    queryset = ExamBook.objects.all().order_by('-created_at')
+    serializer_class = ExamBookSerializer
+
+class SaasOwnerDashboardView(APIView):
+    # Only you (the Superuser) can access this
+    def get(self, request):
+        if not request.user.is_superuser:
+            return Response({"error": "SaaS Owner access restricted."}, status=403)
+
+        # 1. Total platform revenue
+        total_revenue = Transaction.objects.filter(status='SUCCESS').aggregate(Sum('amount'))['amount__sum'] or 0
+
+        # 2. Institutional Health
+        universities = University.objects.annotate(
+            student_count=Count('user', filter=models.Q(user__role='STUDENT'))
+        ).order_by('-created_at')
+        
+        uni_data = SaaSUniversitySerializer(universities, many=True).data
+
+        return Response({
+            "platform_stats": {
+                "total_revenue": float(total_revenue),
+                "total_institutions": universities.count(),
+                "total_students": User.objects.filter(role='STUDENT').count(),
+                "active_vouchers": VoucherCode.objects.filter(is_redeemed=False).count()
+            },
+            "institutions": uni_data
+        })
+
+class SaaSUniversityManagerViewSet(viewsets.ModelViewSet):
+    # Only the Superuser can access this!
+    queryset = University.objects.annotate(
+        student_count=Count('user', filter=models.Q(user__role='STUDENT'))
+    ).order_by('-created_at')
+    serializer_class = SaaSUniversitySerializer
+
+    @action(detail=True, methods=['post'])
+    def toggle_status(self, request, pk=None):
+        uni = self.get_object()
+        uni.is_active = not uni.is_active
+        uni.save()
+        return Response({"status": "active" if uni.is_active else "suspended"})
+
+    @action(detail=True, methods=['post'])
+    def add_credits(self, request, pk=None):
+        uni = self.get_object()
+        amount = int(request.data.get('amount', 0))
+        uni.voucher_balance += amount
+        uni.save()
+        return Response({"new_balance": uni.voucher_balance})
+
+    @action(detail=True, methods=['post'], url_path='toggle-status')
+    def toggle_status(self, request, pk=None):
+        uni = self.get_object()
+        uni.is_active = not uni.is_active # Flip the switch
+        uni.save()
+        return Response({
+            "status": "active" if uni.is_active else "suspended",
+            "is_active": uni.is_active
+        })
+
+class ClassroomViewSet(viewsets.ModelViewSet):
+    serializer_class = ClassroomSerializer  
+
+    def get_queryset(self):
+        # A teacher only sees classrooms THEY created
+        return Classroom.objects.filter(
+            university=self.request.tenant, 
+            teacher=self.request.user
+        )
+
+    def perform_create(self, serializer):
+        # Auto-link the teacher and university on creation
+        serializer.save(
+            teacher=self.request.user, 
+            university=self.request.tenant
+        )
+
+class TeacherClassroomViewSet(viewsets.ModelViewSet):
+    serializer_class = ClassroomSerializer
+
+    def get_queryset(self):
+        return Classroom.objects.filter(
+            university=self.request.tenant,
+            teacher=self.request.user
+        )
+
+    # SENIOR FIX: Add explicit url_path and ensure the method is correct
+    @action(detail=True, methods=['get'], url_path='student_performance')
+    def student_performance(self, request, pk=None):
+        classroom = self.get_object()
+        students = classroom.students.all()
+
+        exists_in_db = Classroom.objects.filter(pk=pk).exists()
+        print(f"DEBUG: Does Classroom {pk} exist at all? {exists_in_db}")
+        
+        # DEBUG: See if the classroom belongs to the current user
+        try:
+            classroom = self.get_object()
+        except Exception as e:
+            print(f"DEBUG: Permission Denied. Classroom {pk} does not belong to {request.user.email}")
+            return Response({"error": "Classroom not found or access denied"}, status=404)
+
+
+        performance_data = []
+        for student in students:
+            # We look at completed attempts for THIS student
+            from exams.models import ExamAttempt
+            stats = ExamAttempt.objects.filter(user=student, status='COMPLETED').aggregate(
+                avg_score=Avg('score'),
+                total=Count('id')
+            )
+            performance_data.append({
+                "student_name": student.first_name + " " + student.last_name,
+                "email": student.email,
+                "avg_score": round(stats['avg_score'] or 0, 1),
+                "exams_completed": stats['total']
+            })
+
+        return Response(performance_data)
+
+    @action(detail=True, methods=['get'], url_path='curriculum_analysis')
+    def curriculum_analysis(self, request, pk=None):
+        classroom = self.get_object()
+        
+        # 1. Get the average score of the whole class per Competency Area
+        from exams.models import ExamAttempt
+        analysis = ExamAttempt.objects.filter(
+            user__classroom=classroom,
+            status='COMPLETED'
+        ).values('competency_area__name').annotate(
+            class_avg=Avg('score')
+        ).order_by('class_avg') # Lowest score first
+
+        return Response(analysis)
+
+class TenantConfigView(APIView):
+    permission_classes = [AllowAny] 
+
+    def get(self, request):
+        tenant = request.tenant
+        
+        if not tenant:
+            return Response({"error": "No university workspace detected"}, status=404)
+         
+        logo_url = None
+        if tenant.logo:
+            try:
+                # 1. Standard DRF way (includes domain + media prefix)
+                logo_url = request.build_absolute_uri(tenant.logo.url)
+                print(f"DEBUG: Logo URL via build_absolute_uri: {logo_url}")
+            except Exception:
+                # 2. Fallback: Manually construct the URL
+                host = request.get_host() # e.g., dmt.localhost:8000
+                protocol = 'https' if request.is_secure() else 'http'
+                logo_url = f"{protocol}://{host}{tenant.logo.url}"
+                print(f"DEBUG: Logo URL via manual construction: {logo_url}")
+
+        return Response({
+            "name": tenant.name,
+            "slug": tenant.slug,
+            "logo": logo_url,
+            "primary_color": tenant.primary_color or "#4f46e5",
+            "branding": {
+                "primary": tenant.primary_color,
+                "is_active": tenant.is_active
+            }
+        })
+
+

@@ -17,6 +17,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from exams.views import (
      CompetencyAreaViewSet, QuestionViewSet,
@@ -27,20 +29,40 @@ from rest_framework_simplejwt.views import (
     # TokenObtainPairView,
     TokenRefreshView,
 )
-from users.views import MyTokenObtainPairView, RegisterWithVoucher
+from users.views import (
+    MyTokenObtainPairView, 
+    RegisterWithVoucher,
+    CreateTeacherView, 
+    JoinClassroomView
+)
+
 from exams.views import (
     QuestionSyncView, StudentDashboardView, 
     CompetencyAreaViewSet, QuestionViewSet, 
-    ExamAttemptViewSet
+    ExamAttemptViewSet,
+    BulkQuestionUploadView, 
+    StudentAnalyticsView,
+    FullMockQuestionView,
+    GlobalBookViewSet, 
+    GlobalCompetencyViewSet,
+    ExportStudentResultsView,
+    InstitutionalReportPDFView
 )
 from core.views import (
     RegisterUniversityView, CheckSlugView,
     DepartmentViewSet, VoucherViewSet,
     DepartmentCompetencyAreasView,   
     TransactionHistoryView,
-    InitializePaymentView
+    InitializePaymentView,
+    SaaSGlobalStatsView,
+    SaasOwnerDashboardView,
+    SaaSUniversityManagerViewSet,
+    ClassroomViewSet,
+    TeacherClassroomViewSet,
+    TenantConfigView
 )
 from core.webhook import ChapaWebhookView
+ 
 
 router = DefaultRouter()
 
@@ -49,12 +71,19 @@ router.register(r'questions', QuestionViewSet, basename='question')
 router.register(r'exam-attempts', ExamAttemptViewSet, basename='examattempt')
 router.register(r'departments', DepartmentViewSet, basename='department')
 router.register(r'vouchers', VoucherViewSet, basename='voucher')
+router.register(r'owner/institutions', SaaSUniversityManagerViewSet, basename='owner-institutions')
+router.register(r'join-classrooms', ClassroomViewSet, basename='join-classrooms')
+router.register(r'teacher/classrooms', TeacherClassroomViewSet, basename='teacher-classrooms')
+router.register(r'curriculum-analysis', TeacherClassroomViewSet, basename='curriculum-analysis')
+router.register(r'owner/books', GlobalBookViewSet, basename='owner-books')
+router.register(r'owner/master-competencies', GlobalCompetencyViewSet, basename='owner-competencies')
 
 urlpatterns = [
     path('admin-a1b2c3d4e5f6g7h8/', admin.site.urls),
     path('api/', include(router.urls)),
+    # path('core/', include('core.urls')),
     path('api/dashboard/', StudentDashboardView.as_view(), name='student-dashboard'),
-    path('api/core/register-university/', RegisterUniversityView.as_view(), name='uni-onboard'),
+    path('api/core/owner/register-university/', RegisterUniversityView.as_view(), name='uni-onboard'),
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('questions/sync/', QuestionSyncView.as_view(), name='question-sync'),
@@ -66,7 +95,21 @@ urlpatterns = [
           DepartmentCompetencyAreasView.as_view(),
         name='department-competency-areas'
     ),
-    path('api/payments/chapa-webhook/', ChapaWebhookView.as_view(), name='chapa-webhook'),
+    path('api/payments/webhook/', ChapaWebhookView.as_view(), name='webhook'),
     path('api/billing/history/', TransactionHistoryView.as_view(), name='billing-history'),
     path('api/payments/initialize/', InitializePaymentView.as_view(), name='initialize-payment'),
+    path('api/exams/questions/upload-csv/', BulkQuestionUploadView.as_view(), name ='upload-csv'),
+    path('faculty/create-teacher/', CreateTeacherView.as_view(), name='create-teacher'),
+    path('api/exams/analytics/student/', StudentAnalyticsView.as_view(), name='student-analytics'),
+    path('api/exams/questions/full-mock/', FullMockQuestionView.as_view(), name='full-mock'),
+    path('api/saas/stats/', SaaSGlobalStatsView.as_view(), name='saas-global-stats'), 
+    path('api/owner/dashboard/', SaasOwnerDashboardView.as_view(), name='saas-owner-dashboard'),
+    path('api/join-classroom/', JoinClassroomView.as_view(), name='join-classroom'),
+    path('api/core/tenant-config/', TenantConfigView.as_view(), name='tenant-config'),
+    path('api/exams/results/export/', ExportStudentResultsView.as_view(), name='export-student-results'),
+    path('api/exams/reports/institutional-pdf/', InstitutionalReportPDFView.as_view(), name='institutional-pdf'),
+     
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

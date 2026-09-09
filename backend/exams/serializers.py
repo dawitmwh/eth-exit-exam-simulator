@@ -2,9 +2,11 @@ from rest_framework import serializers
 from .models import (
     CompetencyArea, Question, 
     QuestionOption, ExamAttempt, 
-    ExamResponse
+    ExamResponse,
+    ExamBook
 )
 from django.db import transaction
+from rest_framework.permissions import IsAdminUser
 
 
 # We have two serializers for questions: One for teachers/admins with all details, and one for students that hides the correct answer and explanation.
@@ -17,10 +19,14 @@ class StudentQuestionOptionSerializer(serializers.ModelSerializer):
 # Serializer for students: Hides the "explanation" and "is_correct" fields, and only shows option text.
 class StudentQuestionSerializer(serializers.ModelSerializer):
     options = StudentQuestionOptionSerializer(many=True, read_only=True)
+    duration_minutes = serializers.IntegerField(
+        source='competency_area.duration_minutes', 
+        read_only=True
+    )
 
     class Meta:
         model = Question
-        fields = ['id', 'competency_area', 'text', 'options'] 
+        fields = ['id', 'competency_area', 'text', 'options', 'duration_minutes'] 
 
 
 class CompetencyAreaSerializer(serializers.ModelSerializer):
@@ -47,12 +53,16 @@ class QuestionOptionSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     options = QuestionOptionSerializer(many=True, read_only=True)
     competency_area_name = serializers.ReadOnlyField(source='competency_area.name')
+    duration_minutes = serializers.IntegerField(
+        source='competency_area.duration_minutes', 
+        read_only=True
+    )
 
     class Meta:
         model = Question
         fields = [
             'id', 'competency_area', 'competency_area_name', 
-            'text', 'explanation', 'difficulty', 'options'
+            'text', 'duration_minutes', 'explanation', 'difficulty', 'options'
         ]
 
 
@@ -199,3 +209,17 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         return question
         
 
+class ExamBookSerializer(serializers.ModelSerializer):
+    # Count how many competency areas (modules) are in this book
+    competencies_count = serializers.IntegerField(
+        source='competencies.count', 
+        read_only=True
+    )
+    
+    class Meta:
+        model = ExamBook
+        fields = ['id', 'title', 'category', 'description', 'competencies_count', 'created_at']
+
+class ExportStudentResultsViewSerializer(serializers.Serializer):
+    student_email = serializers.EmailField()
+    competency_area_id = serializers.IntegerField() 

@@ -1,551 +1,843 @@
 import { useState, useEffect } from 'react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Textarea } from '../../components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Badge } from '../../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Plus, Edit, Trash2, Check, X, FileQuestion } from 'lucide-react';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import MathInput, { MathRenderer } from '../../components/MathInput';
 import apiClient from '../../api/client';
+import { 
+  Plus, Edit, Trash2, Check, X, FileQuestion, 
+  Search, Loader2, Sparkles, Lightbulb, 
+  ChevronRight, AlertCircle, Save
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { MathRenderer } from '../../components/MathInput';
 
-interface QuestionOption {
-  id: string | number;
-  text: string;
-  mathFormula?: string;
-  isCorrect: boolean;
+// --- TYPES ---
+interface Option {
+  id?: number;
+  option_text: string;
+  is_correct: boolean;
 }
 
 interface Question {
   id: number;
-  subjectId: string;
+  competency_area: number;
+  competency_area_name?: string;
   text: string;
-  mathFormula?: string;
-  imageUrl: string | null;
   explanation: string;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
-  options: QuestionOption[];
-  subjectName?: string;
-}
-
-interface SubjectItem {
-  id: number | string;
-  name: string;
+  options: Option[];
 }
 
 export default function QuestionsManager() {
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState<string | 'all'>('all');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [subjects, setSubjects] = useState<SubjectItem[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState('all');
 
+  // Modal & Form State
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [formData, setFormData] = useState({
-    subjectId: '',
+    competency_area: '',
     text: '',
-    mathFormula: '',
     explanation: '',
-    difficulty: 'MEDIUM' as 'EASY' | 'MEDIUM' | 'HARD',
+    difficulty: 'MEDIUM',
     options: [
-      { id: '1', text: '', mathFormula: '', isCorrect: false },
-      { id: '2', text: '', mathFormula: '', isCorrect: false },
-      { id: '3', text: '', mathFormula: '', isCorrect: false },
-      { id: '4', text: '', mathFormula: '', isCorrect: false },
-    ] as QuestionOption[],
+      { option_text: '', is_correct: true },
+      { option_text: '', is_correct: false },
+      { option_text: '', is_correct: false },
+      { option_text: '', is_correct: false },
+    ]
   });
 
-  useEffect(() => {
-    loadAll();
-  }, []);
+  useEffect(() => { loadAllData(); }, []);
 
-  // Replace existing loadAll with a robust loader that:
-  // 1) tries the /competency-areas/ list endpoint (paginated or plain)
-  // 2) falls back to fetching /departments/ and aggregating /departments/:id/competency-areas/
-  // 3) logs errors for easier debugging and shows a toast on failure
-  async function loadAll() {
+  const loadAllData = async () => {
     setLoading(true);
     try {
-      // Attempt direct competency-areas endpoint first
-      let subListRaw: any[] = [];
-      try {
-        const subsRes = await apiClient.get('/competency-areas/?page_size=1000');
-        subListRaw = Array.isArray(subsRes.data) ? subsRes.data : subsRes.data?.results ?? [];
-      } catch (err) {
-        // swallow and fallback below
-        console.warn('competency-areas list failed, will fallback to per-department fetch', err);
-      }
+      const [sRes, qRes] = await Promise.all([
+        apiClient.get('/competency-areas/'),
+        apiClient.get('/questions/')
+      ]);
+      setSubjects(sRes.data);
+      setQuestions(qRes.data);
+    } catch (err) { toast.error("Sync failed"); }
+    finally { setLoading(false); }
+  };
 
-      // Fallback: aggregate per-department competency areas
-      if (!subListRaw || subListRaw.length === 0) {
-        try {
-          const depsRes = await apiClient.get('/departments/');
-          const deps: any[] = depsRes.data || [];
-          const lists = await Promise.all(
-            deps.map((d) =>
-              apiClient
-                .get(`/departments/${d.id}/competency-areas/`)
-                .then((r) =>
-                  (r.data || []).map((item: any) => ({
-                    ...item,
-                    department_name: d.name,
-                  }))
-                )
-                .catch((e) => {
-                  console.warn(`failed to load competency areas for dept ${d.id}`, e);
-                  return [];
-                })
-            )
-          );
-          subListRaw = lists.flat();
-        } catch (err) {
-          console.error('failed to fetch departments for fallback', err);
-          throw err; // will be caught by outer catch
-        }
-      }
-
-      // normalize into subjects used by this component
-      const normalized = (subListRaw || []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        department: s.department ?? s.department_id ?? null,
-        department_name: s.department_name ?? s.department_name ?? s.department_name,
-        question_count: s.question_count ?? s.questions_count ?? 0,
-        duration_minutes: s.duration_minutes ?? null,
-      }));
-
-      setSubjects(normalized);
-
-      // fetch questions (same as before)
-      try {
-        const qRes = await apiClient.get('/questions/?page_size=1000');
-        const qListRaw = Array.isArray(qRes.data) ? qRes.data : qRes.data?.results ?? [];
-        const mapped: Question[] = qListRaw.map((q: any) => ({
-          id: q.id,
-          subjectId: String(q.competency_area),
-          subjectName: q.competency_area_name ?? '',
-          text: q.text,
-          mathFormula: (q as any).math_formula ?? undefined,
-          imageUrl: (q as any).image_url ?? null,
-          explanation: q.explanation ?? '',
-          difficulty: q.difficulty ?? 'MEDIUM',
-          options: (q.options || []).map((opt: any) => ({
-            id: opt.id,
-            text: opt.option_text,
-            mathFormula: (opt as any).math_formula ?? undefined,
-            isCorrect: !!opt.is_correct,
-          })),
-        }));
-        setQuestions(mapped);
-      } catch (err) {
-        console.warn('failed to load questions', err);
-        toast.error('Failed to load questions');
-      }
-    } catch (err) {
-      console.error('loadAll error', err);
-      toast.error('Failed to load subjects/competency areas');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const handleOpenDialog = (question?: Question) => {
-    if (question) {
-      setEditingQuestion(question);
+  const handleOpenDialog = (q?: Question) => {
+    if (q) {
+      setEditingQuestion(q);
       setFormData({
-        subjectId: question.subjectId,
-        text: question.text,
-        mathFormula: question.mathFormula || '',
-        explanation: question.explanation,
-        difficulty: question.difficulty,
-        options: question.options.map((opt) => ({
-          id: opt.id,
-          text: opt.text,
-          mathFormula: opt.mathFormula || '',
-          isCorrect: !!opt.isCorrect,
-        })),
+        competency_area: String(q.competency_area),
+        text: q.text,
+        explanation: q.explanation,
+        difficulty: q.difficulty,
+        options: q.options.map(o => ({ option_text: o.option_text, is_correct: o.is_correct }))
       });
     } else {
       setEditingQuestion(null);
       setFormData({
-        subjectId: '',
+        competency_area: subjects[0]?.id || '',
         text: '',
-        mathFormula: '',
         explanation: '',
         difficulty: 'MEDIUM',
         options: [
-          { id: '1', text: '', mathFormula: '', isCorrect: false },
-          { id: '2', text: '', mathFormula: '', isCorrect: false },
-          { id: '3', text: '', mathFormula: '', isCorrect: false },
-          { id: '4', text: '', mathFormula: '', isCorrect: false },
-        ],
+          { option_text: '', is_correct: true },
+          { option_text: '', is_correct: false },
+          { option_text: '', is_correct: false },
+          { option_text: '', is_correct: false },
+        ]
       });
     }
     setIsDialogOpen(true);
   };
 
-  const getSubjectName = (subjectId: string) => {
-    return subjects.find((s) => String(s.id) === String(subjectId))?.name || 'Unknown';
-  };
-
-  const filteredQuestions = selectedSubject === 'all'
-    ? questions
-    : questions.filter(q => q.subjectId === selectedSubject);
-
-  const toggleCorrectAnswer = (index: number) => {
-    const newOptions = formData.options.map((opt, i) => ({
-      ...opt,
-      isCorrect: i === index,
-    }));
-    setFormData({ ...formData, options: newOptions });
-  };
-
-  const updateOption = (index: number, field: string, value: any) => {
-    const newOptions = [...formData.options];
-    newOptions[index] = { ...newOptions[index], [field]: value };
-    setFormData({ ...formData, options: newOptions });
-  };
-
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this question?')) return;
+    if (!window.confirm("Delete this question forever?")) return;
     try {
       await apiClient.delete(`/questions/${id}/`);
-      toast.success('Question deleted');
-      await loadAll();
-    } catch {
-      toast.error('Delete failed');
-    }
+      toast.success("Question removed from bank");
+      loadAllData();
+    } catch (err) { toast.error("Delete failed"); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.subjectId || !formData.text.trim()) {
-      toast.error('Please provide subject and question text');
-      return;
-    }
-    if (!formData.options.some(o => o.isCorrect)) {
-      toast.error('Please mark at least one option as correct');
-      return;
-    }
-
     setSaving(true);
     try {
-      const payload: any = {
-        competency_area: Number(formData.subjectId),
-        text: formData.text,
-        explanation: formData.explanation,
-        difficulty: formData.difficulty,
-        // options are read-only on the main Question serializer in backend.
-        // include them optimistically; backend may ignore them. We reload list after save.
-        options: formData.options.map(o => ({ option_text: o.text, is_correct: !!o.isCorrect })),
-      };
-
       if (editingQuestion) {
-        await apiClient.put(`/questions/${editingQuestion.id}/`, payload);
-        toast.success('Question updated');
+        await apiClient.put(`/questions/${editingQuestion.id}/`, formData);
+        toast.success("Question updated");
       } else {
-        await apiClient.post('/questions/', payload);
-        toast.success('Question created');
+        await apiClient.post('/questions/', formData);
+        toast.success("New question added to bank");
       }
-
-      await loadAll();
       setIsDialogOpen(false);
-      setSuccessMessage(editingQuestion ? 'Question updated successfully!' : 'Question created successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      loadAllData();
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || (err?.response?.data && JSON.stringify(err.response.data)) || 'Save failed';
-      toast.error(String(msg));
-    } finally {
-      setSaving(false);
-    }
+      toast.error(err.response?.data?.error || "Save failed");
+    } finally { setSaving(false); }
   };
 
+  const updateOption = (idx: number, text: string) => {
+    const newOpts = [...formData.options];
+    newOpts[idx].option_text = text;
+    setFormData({ ...formData, options: newOpts });
+  };
+
+  const setCorrectOption = (idx: number) => {
+    const newOpts = formData.options.map((o, i) => ({ ...o, is_correct: i === idx }));
+    setFormData({ ...formData, options: newOpts });
+  };
+
+  const filteredQuestions = selectedSubject === 'all' 
+    ? questions 
+    : questions.filter(q => String(q.competency_area) === selectedSubject);
+
+  if (loading) return <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-indigo-600" size={40} /></div>;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Questions Bank</h2>
-          <p className="text-muted-foreground">Create and manage exam questions with math support</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Select value={selectedSubject} onValueChange={(v: any) => setSelectedSubject(v)}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by subject" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              {subjects.map((subject) => (
-                <SelectItem key={String(subject.id)} value={String(subject.id)}>
-                  {subject.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="size-4" />
-            Add Question
-          </Button>
-        </div>
+    <div className="space-y-8">
+      {/* TOOLBAR */}
+      <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+         <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <select 
+              className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-slate-700 appearance-none focus:ring-2 ring-indigo-500/20"
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+            >
+              <option value="all">All Competency Areas</option>
+              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+         </div>
+         <Button onClick={() => handleOpenDialog()} className="h-14 px-8 rounded-2xl bg-indigo-600 text-white font-black shadow-lg shadow-indigo-100">
+            <Plus size={20} className="mr-2" /> New Question
+         </Button>
       </div>
 
-      {successMessage && (
-        <Alert className="bg-green-50 dark:bg-green-950/20 border-green-600">
-          <AlertDescription className="text-green-600">{successMessage}</AlertDescription>
-        </Alert>
-      )}
+      {/* LIST */}
+      <div className="space-y-6">
+        {filteredQuestions.map((q, idx) => (
+          <motion.div key={q.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.03 }}>
+            <Card className="rounded-[32px] border-none shadow-sm bg-white overflow-hidden group">
+               <div className="p-8 md:p-10 flex flex-col md:flex-row gap-10">
+                  <div className="md:w-64 shrink-0 space-y-4">
+                     <Badge className="bg-indigo-50 text-indigo-600 border-none font-black text-[10px] tracking-widest px-3 py-1 uppercase">ID: {q.id}</Badge>
+                     <div className="pt-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Difficulty</p>
+                        <span className={`text-xs font-bold ${q.difficulty === 'HARD' ? 'text-rose-600' : 'text-emerald-600'}`}>{q.difficulty} Level</span>
+                     </div>
+                     <div className="flex gap-2 pt-4">
+                        <button onClick={() => handleOpenDialog(q)} className="p-3 bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"><Edit size={18}/></button>
+                        <button onClick={() => handleDelete(q.id)} className="p-3 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"><Trash2 size={18}/></button>
+                     </div>
+                  </div>
 
-      <div className="space-y-4">
-        {loading ? (
-          <div className="p-6 text-center text-slate-400">Loading…</div>
-        ) : filteredQuestions.map((question, index) => (
-          <Card key={question.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline">Q{index + 1}</Badge>
-                    <Badge>{getSubjectName(question.subjectId)}</Badge>
-                    <Badge variant={
-                      question.difficulty === 'EASY' ? 'secondary' :
-                      question.difficulty === 'HARD' ? 'destructive' : 'default'
-                    }>
-                      {question.difficulty}
-                    </Badge>
+                  <div className="flex-1">
+                     <h3 className="text-xl font-bold text-slate-900 leading-relaxed mb-8"><MathRenderer math={q.text} /></h3>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {q.options?.map((opt: any, oIdx: number) => (
+                           <div key={oIdx} className={`p-4 rounded-2xl border-2 flex items-center gap-4 ${opt.is_correct ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-50 bg-slate-50/50'}`}>
+                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] ${opt.is_correct ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'}`}>{String.fromCharCode(65 + oIdx)}</div>
+                              <span className="text-sm font-medium text-slate-700"><MathRenderer math={opt.option_text} /></span>
+                           </div>
+                        ))}
+                     </div>
+                     <div className="mt-8 pt-8 border-t border-slate-100 flex gap-4">
+                        <div className="p-2 h-fit bg-amber-50 text-amber-600 rounded-lg"><Lightbulb size={16}/></div>
+                        <p className="text-sm text-slate-600 italic font-medium">{q.explanation}</p>
+                     </div>
                   </div>
-                  <CardTitle className="text-base">{question.text}</CardTitle>
-                  {question.mathFormula && (
-                    <div className="mt-2 p-3 bg-muted rounded-md">
-                      <MathRenderer math={question.mathFormula} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => handleOpenDialog(question)}>
-                    <Edit className="size-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(question.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {question.options.map((option, optIdx) => (
-                <div
-                  key={String(option.id)}
-                  className={`p-3 rounded-lg border-2 ${option.isCorrect ? 'border-green-600 bg-green-50' : 'border-border'}`}
-                >
-                  <div className="flex items-start gap-2">
-                    {option.isCorrect && <Check className="size-5 text-green-600 shrink-0 mt-0.5" />}
-                    <div className="flex-1">
-                      <span className="text-sm font-medium">Option {String.fromCharCode(65 + optIdx)}:</span>
-                      <p className="text-sm mt-1">{option.text}</p>
-                      {option.mathFormula && (
-                        <div className="mt-2">
-                          <MathRenderer math={option.mathFormula} inline />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div className="pt-3 border-t">
-                <p className="text-sm font-medium mb-1">Explanation:</p>
-                <p className="text-sm text-muted-foreground">{question.explanation}</p>
-              </div>
-            </CardContent>
-          </Card>
+               </div>
+            </Card>
+          </motion.div>
         ))}
-
-        {!loading && filteredQuestions.length === 0 && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileQuestion className="size-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                {selectedSubject === 'all' ? 'No questions yet' : 'No questions for this subject'}
-              </p>
-              <Button onClick={() => handleOpenDialog()}>
-                <Plus className="size-4" />
-                Create First Question
-              </Button>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
+      {/* --- CREATE / EDIT DIALOG --- */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingQuestion ? 'Edit' : 'Create'} Question</DialogTitle>
-            <DialogDescription>
-              {editingQuestion
-                ? 'Update the question details below. You can use LaTeX for math equations.'
-                : 'Add a new question with multiple choice options. Math equations supported via LaTeX.'}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-4xl rounded-[40px] p-0 border-none shadow-2xl overflow-hidden bg-white">
+          <div className="p-8 md:p-12">
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight">
+                {editingQuestion ? 'Refine Question' : 'Architect New Question'}
+              </DialogTitle>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList>
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="options">Options</TabsTrigger>
-                <TabsTrigger value="explanation">Explanation</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="basic" className="space-y-4 mt-4">
+            <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="subject" className="text-sm font-medium">
-                    Subject / Competency Area *
-                  </label>
-                  <Select
-                    value={formData.subjectId}
-                    onValueChange={(value: any) => setFormData({ ...formData, subjectId: value })}
-                    required
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subject Area</label>
+                  <select 
+                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:ring-2 ring-indigo-500"
+                    value={formData.competency_area}
+                    onChange={e => setFormData({...formData, competency_area: e.target.value})}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subjects.map((subject) => (
-                        <SelectItem key={String(subject.id)} value={String(subject.id)}>
-                          {subject.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
                 </div>
-
                 <div className="space-y-2">
-                  <label htmlFor="difficulty" className="text-sm font-medium">
-                    Difficulty Level *
-                  </label>
-                  <Select
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Difficulty</label>
+                  <select 
+                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold outline-none focus:ring-2 ring-indigo-500"
                     value={formData.difficulty}
-                    onValueChange={(value: any) => setFormData({ ...formData, difficulty: value })}
+                    onChange={e => setFormData({...formData, difficulty: e.target.value as any})}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EASY">Easy</SelectItem>
-                      <SelectItem value="MEDIUM">Medium</SelectItem>
-                      <SelectItem value="HARD">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <option value="EASY">Entry Level (Easy)</option>
+                    <option value="MEDIUM">Standard (Medium)</option>
+                    <option value="HARD">Expert (Hard)</option>
+                  </select>
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="text" className="text-sm font-medium">
-                    Question Text *
-                  </label>
-                  <Textarea
-                    id="text"
-                    value={formData.text}
-                    onChange={(e) => setFormData({ ...formData, text: e.target.value })}
-                    placeholder="Enter the question text..."
-                    required
-                    rows={3}
-                  />
-                </div>
-
-                <MathInput
-                  label="Question Math Formula (Optional)"
-                  value={formData.mathFormula}
-                  onChange={(value) => setFormData({ ...formData, mathFormula: value })}
-                  placeholder="Enter LaTeX equation for the question"
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Question Content (supports LaTeX)</label>
+                <textarea 
+                  className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[24px] font-bold text-slate-700 min-h-[120px] outline-none focus:ring-2 ring-indigo-500"
+                  value={formData.text}
+                  onChange={e => setFormData({...formData, text: e.target.value})}
+                  placeholder="e.g. Solve for $x$ in $x^2 = 16$"
                 />
-              </TabsContent>
+              </div>
 
-              <TabsContent value="options" className="space-y-4 mt-4">
-                {formData.options.map((option, index) => (
-                  <Card key={String(option.id)}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">Option {String.fromCharCode(65 + index)}</CardTitle>
-                        <Button
-                          type="button"
-                          variant={option.isCorrect ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => toggleCorrectAnswer(index)}
-                        >
-                          {option.isCorrect ? (
-                            <>
-                              <Check className="size-4" />
-                              Correct Answer
-                            </>
-                          ) : (
-                            <>
-                              <X className="size-4" />
-                              Mark as Correct
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Option Text *</label>
-                        <Input
-                          value={option.text}
-                          onChange={(e) => updateOption(index, 'text', e.target.value)}
-                          placeholder={`Enter option ${String.fromCharCode(65 + index)} text`}
-                          required
-                        />
-                      </div>
-
-                      <MathInput
-                        label="Option Math Formula (Optional)"
-                        value={option.mathFormula || ''}
-                        onChange={(value) => updateOption(index, 'mathFormula', value)}
-                        placeholder="Enter LaTeX equation for this option"
+              {/* OPTIONS GRID */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {formData.options.map((opt, i) => (
+                   <div key={i} className={`p-4 rounded-[24px] border-2 transition-all flex items-center gap-4 ${opt.is_correct ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-50 bg-slate-50'}`}>
+                      <button type="button" onClick={() => setCorrectOption(i)} className={`w-8 h-8 rounded-xl font-bold text-xs ${opt.is_correct ? 'bg-emerald-500 text-white' : 'bg-white text-slate-400 border border-slate-100'}`}>
+                        {String.fromCharCode(65 + i)}
+                      </button>
+                      <input 
+                        className="bg-transparent border-none outline-none font-bold text-sm w-full"
+                        value={opt.option_text}
+                        onChange={e => updateOption(i, e.target.value)}
+                        placeholder={`Option ${String.fromCharCode(65 + i)}...`}
                       />
-                    </CardContent>
-                  </Card>
-                ))}
-              </TabsContent>
+                      {opt.is_correct && <Check size={16} className="text-emerald-500" />}
+                   </div>
+                 ))}
+              </div>
 
-              <TabsContent value="explanation" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <label htmlFor="explanation" className="text-sm font-medium">
-                    Explanation *
-                  </label>
-                  <Textarea
-                    id="explanation"
-                    value={formData.explanation}
-                    onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
-                    placeholder="Provide a detailed explanation of the correct answer..."
-                    required
-                    rows={5}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This explanation will be shown to students after they answer (in practice mode).
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Learning Explanation</label>
+                <textarea 
+                  className="w-full p-6 bg-slate-50 border border-slate-100 rounded-[24px] font-medium text-slate-600 min-h-[100px] outline-none"
+                  value={formData.explanation}
+                  onChange={e => setFormData({...formData, explanation: e.target.value})}
+                />
+              </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {editingQuestion ? 'Update' : 'Create'} Question
-              </Button>
-            </DialogFooter>
-          </form>
+              <div className="flex gap-4 pt-4">
+                 <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="flex-1 h-14 rounded-2xl font-bold">Abort</Button>
+                 <Button type="submit" disabled={saving} className="flex-1 h-14 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100">
+                    {saving ? <Loader2 className="animate-spin" /> : <><Save size={18} className="mr-2"/> Commit Question</>}
+                 </Button>
+              </div>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
+
+
+// import { useState, useEffect } from 'react';
+// import { Button } from '../../components/ui/button';
+// import { Input } from '../../components/ui/input';
+// import { Textarea } from '../../components/ui/textarea';
+// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+// import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+// import { Badge } from '../../components/ui/badge';
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+// import { Plus, Edit, Trash2, Check, X, FileQuestion } from 'lucide-react';
+// import { Alert, AlertDescription } from '../../components/ui/alert';
+// import MathInput, { MathRenderer } from '../../components/MathInput';
+// import apiClient from '../../api/client';
+// import { toast } from 'sonner';
+
+// interface QuestionOption {
+//   id: string | number;
+//   text: string;
+//   mathFormula?: string;
+//   isCorrect: boolean;
+// }
+
+// interface Question {
+//   id: number;
+//   subjectId: string;
+//   text: string;
+//   mathFormula?: string;
+//   imageUrl: string | null;
+//   explanation: string;
+//   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+//   options: QuestionOption[];
+//   subjectName?: string;
+// }
+
+// interface SubjectItem {
+//   id: number | string;
+//   name: string;
+// }
+
+// export default function QuestionsManager() {
+//   const [questions, setQuestions] = useState<Question[]>([]);
+//   const [isDialogOpen, setIsDialogOpen] = useState(false);
+//   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+//   const [selectedSubject, setSelectedSubject] = useState<string | 'all'>('all');
+//   const [successMessage, setSuccessMessage] = useState('');
+//   const [loading, setLoading] = useState(true);
+//   const [saving, setSaving] = useState(false);
+//   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
+
+//   const [formData, setFormData] = useState({
+//     subjectId: '',
+//     text: '',
+//     mathFormula: '',
+//     explanation: '',
+//     difficulty: 'MEDIUM' as 'EASY' | 'MEDIUM' | 'HARD',
+//     options: [
+//       { id: '1', text: '', mathFormula: '', isCorrect: false },
+//       { id: '2', text: '', mathFormula: '', isCorrect: false },
+//       { id: '3', text: '', mathFormula: '', isCorrect: false },
+//       { id: '4', text: '', mathFormula: '', isCorrect: false },
+//     ] as QuestionOption[],
+//   });
+
+//   useEffect(() => {
+//     loadAll();
+//   }, []);
+
+//   // Replace existing loadAll with a robust loader that:
+//   // 1) tries the /competency-areas/ list endpoint (paginated or plain)
+//   // 2) falls back to fetching /departments/ and aggregating /departments/:id/competency-areas/
+//   // 3) logs errors for easier debugging and shows a toast on failure
+//   async function loadAll() {
+//     setLoading(true);
+//     try {
+//       // Attempt direct competency-areas endpoint first
+//       let subListRaw: any[] = [];
+//       try {
+//         const subsRes = await apiClient.get('/competency-areas/?page_size=1000');
+//         subListRaw = Array.isArray(subsRes.data) ? subsRes.data : subsRes.data?.results ?? [];
+//       } catch (err) {
+//         // swallow and fallback below
+//         console.warn('competency-areas list failed, will fallback to per-department fetch', err);
+//       }
+
+//       // Fallback: aggregate per-department competency areas
+//       if (!subListRaw || subListRaw.length === 0) {
+//         try {
+//           const depsRes = await apiClient.get('/departments/');
+//           const deps: any[] = depsRes.data || [];
+//           const lists = await Promise.all(
+//             deps.map((d) =>
+//               apiClient
+//                 .get(`/departments/${d.id}/competency-areas/`)
+//                 .then((r) =>
+//                   (r.data || []).map((item: any) => ({
+//                     ...item,
+//                     department_name: d.name,
+//                   }))
+//                 )
+//                 .catch((e) => {
+//                   console.warn(`failed to load competency areas for dept ${d.id}`, e);
+//                   return [];
+//                 })
+//             )
+//           );
+//           subListRaw = lists.flat();
+//         } catch (err) {
+//           console.error('failed to fetch departments for fallback', err);
+//           throw err; // will be caught by outer catch
+//         }
+//       }
+
+//       // normalize into subjects used by this component
+//       const normalized = (subListRaw || []).map((s: any) => ({
+//         id: s.id,
+//         name: s.name,
+//         department: s.department ?? s.department_id ?? null,
+//         department_name: s.department_name ?? s.department_name ?? s.department_name,
+//         question_count: s.question_count ?? s.questions_count ?? 0,
+//         duration_minutes: s.duration_minutes ?? null,
+//       }));
+
+//       setSubjects(normalized);
+
+//       // fetch questions (same as before)
+//       try {
+//         const qRes = await apiClient.get('/questions/?page_size=1000');
+//         const qListRaw = Array.isArray(qRes.data) ? qRes.data : qRes.data?.results ?? [];
+//         const mapped: Question[] = qListRaw.map((q: any) => ({
+//           id: q.id,
+//           subjectId: String(q.competency_area),
+//           subjectName: q.competency_area_name ?? '',
+//           text: q.text,
+//           mathFormula: (q as any).math_formula ?? undefined,
+//           imageUrl: (q as any).image_url ?? null,
+//           explanation: q.explanation ?? '',
+//           difficulty: q.difficulty ?? 'MEDIUM',
+//           options: (q.options || []).map((opt: any) => ({
+//             id: opt.id,
+//             text: opt.option_text,
+//             mathFormula: (opt as any).math_formula ?? undefined,
+//             isCorrect: !!opt.is_correct,
+//           })),
+//         }));
+//         setQuestions(mapped);
+//       } catch (err) {
+//         console.warn('failed to load questions', err);
+//         toast.error('Failed to load questions');
+//       }
+//     } catch (err) {
+//       console.error('loadAll error', err);
+//       toast.error('Failed to load subjects/competency areas');
+//     } finally {
+//       setLoading(false);
+//     }
+//   }
+
+//   const handleOpenDialog = (question?: Question) => {
+//     if (question) {
+//       setEditingQuestion(question);
+//       setFormData({
+//         subjectId: question.subjectId,
+//         text: question.text,
+//         mathFormula: question.mathFormula || '',
+//         explanation: question.explanation,
+//         difficulty: question.difficulty,
+//         options: question.options.map((opt) => ({
+//           id: opt.id,
+//           text: opt.text,
+//           mathFormula: opt.mathFormula || '',
+//           isCorrect: !!opt.isCorrect,
+//         })),
+//       });
+//     } else {
+//       setEditingQuestion(null);
+//       setFormData({
+//         subjectId: '',
+//         text: '',
+//         mathFormula: '',
+//         explanation: '',
+//         difficulty: 'MEDIUM',
+//         options: [
+//           { id: '1', text: '', mathFormula: '', isCorrect: false },
+//           { id: '2', text: '', mathFormula: '', isCorrect: false },
+//           { id: '3', text: '', mathFormula: '', isCorrect: false },
+//           { id: '4', text: '', mathFormula: '', isCorrect: false },
+//         ],
+//       });
+//     }
+//     setIsDialogOpen(true);
+//   };
+
+//   const getSubjectName = (subjectId: string) => {
+//     return subjects.find((s) => String(s.id) === String(subjectId))?.name || 'Unknown';
+//   };
+
+//   const filteredQuestions = selectedSubject === 'all'
+//     ? questions
+//     : questions.filter(q => q.subjectId === selectedSubject);
+
+//   const toggleCorrectAnswer = (index: number) => {
+//     const newOptions = formData.options.map((opt, i) => ({
+//       ...opt,
+//       isCorrect: i === index,
+//     }));
+//     setFormData({ ...formData, options: newOptions });
+//   };
+
+//   const updateOption = (index: number, field: string, value: any) => {
+//     const newOptions = [...formData.options];
+//     newOptions[index] = { ...newOptions[index], [field]: value };
+//     setFormData({ ...formData, options: newOptions });
+//   };
+
+//   const handleDelete = async (id: number) => {
+//     if (!confirm('Are you sure you want to delete this question?')) return;
+//     try {
+//       await apiClient.delete(`/questions/${id}/`);
+//       toast.success('Question deleted');
+//       await loadAll();
+//     } catch {
+//       toast.error('Delete failed');
+//     }
+//   };
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!formData.subjectId || !formData.text.trim()) {
+//       toast.error('Please provide subject and question text');
+//       return;
+//     }
+//     if (!formData.options.some(o => o.isCorrect)) {
+//       toast.error('Please mark at least one option as correct');
+//       return;
+//     }
+
+//     setSaving(true);
+//     try {
+//       const payload: any = {
+//         competency_area: Number(formData.subjectId),
+//         text: formData.text,
+//         explanation: formData.explanation,
+//         difficulty: formData.difficulty,
+//         // options are read-only on the main Question serializer in backend.
+//         // include them optimistically; backend may ignore them. We reload list after save.
+//         options: formData.options.map(o => ({ option_text: o.text, is_correct: !!o.isCorrect })),
+//       };
+
+//       if (editingQuestion) {
+//         await apiClient.put(`/questions/${editingQuestion.id}/`, payload);
+//         toast.success('Question updated');
+//       } else {
+//         await apiClient.post('/questions/', payload);
+//         toast.success('Question created');
+//       }
+
+//       await loadAll();
+//       setIsDialogOpen(false);
+//       setSuccessMessage(editingQuestion ? 'Question updated successfully!' : 'Question created successfully!');
+//       setTimeout(() => setSuccessMessage(''), 3000);
+//     } catch (err: any) {
+//       const msg = err?.response?.data?.detail || (err?.response?.data && JSON.stringify(err.response.data)) || 'Save failed';
+//       toast.error(String(msg));
+//     } finally {
+//       setSaving(false);
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+//         <div>
+//           <h2 className="text-2xl font-semibold">Questions Bank</h2>
+//           <p className="text-muted-foreground">Create and manage exam questions with math support</p>
+//         </div>
+//         <div className="flex items-center gap-3">
+//           <Select value={selectedSubject} onValueChange={(v: any) => setSelectedSubject(v)}>
+//             <SelectTrigger className="w-[200px]">
+//               <SelectValue placeholder="Filter by subject" />
+//             </SelectTrigger>
+//             <SelectContent>
+//               <SelectItem value="all">All Subjects</SelectItem>
+//               {subjects.map((subject) => (
+//                 <SelectItem key={String(subject.id)} value={String(subject.id)}>
+//                   {subject.name}
+//                 </SelectItem>
+//               ))}
+//             </SelectContent>
+//           </Select>
+//           <Button onClick={() => handleOpenDialog()}>
+//             <Plus className="size-4" />
+//             Add Question
+//           </Button>
+//         </div>
+//       </div>
+
+//       {successMessage && (
+//         <Alert className="bg-green-50 dark:bg-green-950/20 border-green-600">
+//           <AlertDescription className="text-green-600">{successMessage}</AlertDescription>
+//         </Alert>
+//       )}
+
+//       <div className="space-y-4">
+//         {loading ? (
+//           <div className="p-6 text-center text-slate-400">Loading…</div>
+//         ) : filteredQuestions.map((question, index) => (
+//           <Card key={question.id}>
+//             <CardHeader>
+//               <div className="flex items-start justify-between gap-4">
+//                 <div className="flex-1">
+//                   <div className="flex items-center gap-2 mb-2">
+//                     <Badge variant="outline">Q{index + 1}</Badge>
+//                     <Badge>{getSubjectName(question.subjectId)}</Badge>
+//                     <Badge variant={
+//                       question.difficulty === 'EASY' ? 'secondary' :
+//                       question.difficulty === 'HARD' ? 'destructive' : 'default'
+//                     }>
+//                       {question.difficulty}
+//                     </Badge>
+//                   </div>
+//                   <CardTitle className="text-base">{question.text}</CardTitle>
+//                   {question.mathFormula && (
+//                     <div className="mt-2 p-3 bg-muted rounded-md">
+//                       <MathRenderer math={question.mathFormula} />
+//                     </div>
+//                   )}
+//                 </div>
+//                 <div className="flex gap-2 shrink-0">
+//                   <Button variant="outline" size="sm" onClick={() => handleOpenDialog(question)}>
+//                     <Edit className="size-4" />
+//                   </Button>
+//                   <Button
+//                     variant="outline"
+//                     size="sm"
+//                     onClick={() => handleDelete(question.id)}
+//                     className="text-destructive hover:text-destructive"
+//                   >
+//                     <Trash2 className="size-4" />
+//                   </Button>
+//                 </div>
+//               </div>
+//             </CardHeader>
+//             <CardContent className="space-y-3">
+//               {question.options.map((option, optIdx) => (
+//                 <div
+//                   key={String(option.id)}
+//                   className={`p-3 rounded-lg border-2 ${option.isCorrect ? 'border-green-600 bg-green-50' : 'border-border'}`}
+//                 >
+//                   <div className="flex items-start gap-2">
+//                     {option.isCorrect && <Check className="size-5 text-green-600 shrink-0 mt-0.5" />}
+//                     <div className="flex-1">
+//                       <span className="text-sm font-medium">Option {String.fromCharCode(65 + optIdx)}:</span>
+//                       <p className="text-sm mt-1">{option.text}</p>
+//                       {option.mathFormula && (
+//                         <div className="mt-2">
+//                           <MathRenderer math={option.mathFormula} inline />
+//                         </div>
+//                       )}
+//                     </div>
+//                   </div>
+//                 </div>
+//               ))}
+//               <div className="pt-3 border-t">
+//                 <p className="text-sm font-medium mb-1">Explanation:</p>
+//                 <p className="text-sm text-muted-foreground">{question.explanation}</p>
+//               </div>
+//             </CardContent>
+//           </Card>
+//         ))}
+
+//         {!loading && filteredQuestions.length === 0 && (
+//           <Card>
+//             <CardContent className="flex flex-col items-center justify-center py-12">
+//               <FileQuestion className="size-12 text-muted-foreground mb-4" />
+//               <p className="text-muted-foreground mb-4">
+//                 {selectedSubject === 'all' ? 'No questions yet' : 'No questions for this subject'}
+//               </p>
+//               <Button onClick={() => handleOpenDialog()}>
+//                 <Plus className="size-4" />
+//                 Create First Question
+//               </Button>
+//             </CardContent>
+//           </Card>
+//         )}
+//       </div>
+
+//       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+//         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+//           <DialogHeader>
+//             <DialogTitle>{editingQuestion ? 'Edit' : 'Create'} Question</DialogTitle>
+//             <DialogDescription>
+//               {editingQuestion
+//                 ? 'Update the question details below. You can use LaTeX for math equations.'
+//                 : 'Add a new question with multiple choice options. Math equations supported via LaTeX.'}
+//             </DialogDescription>
+//           </DialogHeader>
+
+//           <form onSubmit={handleSubmit} className="space-y-6">
+//             <Tabs defaultValue="basic" className="w-full">
+//               <TabsList>
+//                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
+//                 <TabsTrigger value="options">Options</TabsTrigger>
+//                 <TabsTrigger value="explanation">Explanation</TabsTrigger>
+//               </TabsList>
+
+//               <TabsContent value="basic" className="space-y-4 mt-4">
+//                 <div className="space-y-2">
+//                   <label htmlFor="subject" className="text-sm font-medium">
+//                     Subject / Competency Area *
+//                   </label>
+//                   <Select
+//                     value={formData.subjectId}
+//                     onValueChange={(value: any) => setFormData({ ...formData, subjectId: value })}
+//                     required
+//                   >
+//                     <SelectTrigger>
+//                       <SelectValue placeholder="Select subject" />
+//                     </SelectTrigger>
+//                     <SelectContent>
+//                       {subjects.map((subject) => (
+//                         <SelectItem key={String(subject.id)} value={String(subject.id)}>
+//                           {subject.name}
+//                         </SelectItem>
+//                       ))}
+//                     </SelectContent>
+//                   </Select>
+//                 </div>
+
+//                 <div className="space-y-2">
+//                   <label htmlFor="difficulty" className="text-sm font-medium">
+//                     Difficulty Level *
+//                   </label>
+//                   <Select
+//                     value={formData.difficulty}
+//                     onValueChange={(value: any) => setFormData({ ...formData, difficulty: value })}
+//                   >
+//                     <SelectTrigger>
+//                       <SelectValue />
+//                     </SelectTrigger>
+//                     <SelectContent>
+//                       <SelectItem value="EASY">Easy</SelectItem>
+//                       <SelectItem value="MEDIUM">Medium</SelectItem>
+//                       <SelectItem value="HARD">Hard</SelectItem>
+//                     </SelectContent>
+//                   </Select>
+//                 </div>
+
+//                 <div className="space-y-2">
+//                   <label htmlFor="text" className="text-sm font-medium">
+//                     Question Text *
+//                   </label>
+//                   <Textarea
+//                     id="text"
+//                     value={formData.text}
+//                     onChange={(e) => setFormData({ ...formData, text: e.target.value })}
+//                     placeholder="Enter the question text..."
+//                     required
+//                     rows={3}
+//                   />
+//                 </div>
+
+//                 <MathInput
+//                   label="Question Math Formula (Optional)"
+//                   value={formData.mathFormula}
+//                   onChange={(value) => setFormData({ ...formData, mathFormula: value })}
+//                   placeholder="Enter LaTeX equation for the question"
+//                 />
+              
+//               </TabsContent>
+
+//               <TabsContent value="options" className="space-y-4 mt-4">
+//                 {formData.options.map((option, index) => (
+//                   <Card key={String(option.id)}>
+//                     <CardHeader>
+//                       <div className="flex items-center justify-between">
+//                         <CardTitle className="text-base">Option {String.fromCharCode(65 + index)}</CardTitle>
+//                         <Button
+//                           type="button"
+//                           variant={option.isCorrect ? 'default' : 'outline'}
+//                           size="sm"
+//                           onClick={() => toggleCorrectAnswer(index)}
+//                         >
+//                           {option.isCorrect ? (
+//                             <>
+//                               <Check className="size-4" />
+//                               Correct Answer
+//                             </>
+//                           ) : (
+//                             <>
+//                               <X className="size-4" />
+//                               Mark as Correct
+//                             </>
+//                           )}
+//                         </Button>
+//                       </div>
+//                     </CardHeader>
+//                     <CardContent className="space-y-3">
+//                       <div className="space-y-2">
+//                         <label className="text-sm font-medium">Option Text *</label>
+//                         <Input
+//                           value={option.text}
+//                           onChange={(e) => updateOption(index, 'text', e.target.value)}
+//                           placeholder={`Enter option ${String.fromCharCode(65 + index)} text`}
+//                           required
+//                         />
+//                       </div>
+
+//                       <MathInput
+//                         label="Option Math Formula (Optional)"
+//                         value={option.mathFormula || ''}
+//                         onChange={(value) => updateOption(index, 'mathFormula', value)}
+//                         placeholder="Enter LaTeX equation for this option"
+//                       />
+//                     </CardContent>
+//                   </Card>
+//                 ))}
+//               </TabsContent>
+
+//               <TabsContent value="explanation" className="space-y-4 mt-4">
+//                 <div className="space-y-2">
+//                   <label htmlFor="explanation" className="text-sm font-medium">
+//                     Explanation *
+//                   </label>
+//                   <Textarea
+//                     id="explanation"
+//                     value={formData.explanation}
+//                     onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+//                     placeholder="Provide a detailed explanation of the correct answer..."
+//                     required
+//                     rows={5}
+//                   />
+//                   <p className="text-xs text-muted-foreground">
+//                     This explanation will be shown to students after they answer (in practice mode).
+//                   </p>
+//                 </div>
+//               </TabsContent>
+//             </Tabs>
+
+//             <DialogFooter>
+//               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+//                 Cancel
+//               </Button>
+//               <Button type="submit" disabled={saving}>
+//                 {editingQuestion ? 'Update' : 'Create'} Question
+//               </Button>
+//             </DialogFooter>
+//           </form>
+//         </DialogContent>
+//       </Dialog>
+//     </div>
+//   );
+// }

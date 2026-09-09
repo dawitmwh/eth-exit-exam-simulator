@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import University, Department, VoucherCode, Transaction, ExamBook, UniversityBookSubscription
+from .models import University, Department, VoucherCode, Transaction, ExamBook, UniversityBookSubscription, Classroom
 from django.contrib.admin import site
 
 
@@ -50,3 +50,14 @@ class UniversityBookSubscriptionAdmin(admin.ModelAdmin):
     list_display = ['university', 'book', 'unlocked_at']
     list_filter = ['university', 'book']
     search_fields = ['university__name', 'book__title']
+
+@admin.register(Classroom)
+class ClassroomAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'department', 'student_count', 'created_at']
+    list_filter = ['department__university', 'department']
+    search_fields = ['name', 'code']
+    readonly_fields = ['code']  # Code is auto-generated and should not be editable
+
+    def student_count(self, obj):
+        return obj.students.count()
+    student_count.short_description = 'Number of Students'
