@@ -32,8 +32,6 @@ class TenantMiddleware:
             if tenant:
                 request.tenant = tenant
             else:
-                if 'admin-a1b2c3d4e5f6g7h8/' in request.path:
-                    pass
                 return JsonResponse({"error": "Portal not found"}, status=404)
 
         return self.get_response(request)
