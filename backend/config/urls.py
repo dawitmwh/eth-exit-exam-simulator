@@ -22,7 +22,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from requests import Response
 from rest_framework.routers import DefaultRouter
-from django.views.generic import APIView
+from rest_framework.views import APIView
 from exams.views import (
      CompetencyAreaViewSet, QuestionViewSet,
       ExamAttemptViewSet, StudentDashboardView
