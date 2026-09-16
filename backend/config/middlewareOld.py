@@ -17,9 +17,14 @@ class TenantMiddleware:
         #     return self.get_response(request)
 
         # Check if the request is for a webhook or a tunnel (ngrok/pinggy) or the root domain
+        # is_webhook = 'webhook' in path
+        # is_tunnel = 'pinggy' in host or 'ngrok' in host
+        # is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127']
+
         is_webhook = 'webhook' in path
-        is_tunnel = 'pinggy' in host or 'ngrok' in host
-        is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127']
+        is_tunnel = 'amazonaws' in host or 'piggy' in host
+        is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127', 'amazonaws', 'ec2-51-20-150-131.eu-north-1']
+
 
         if is_root or is_tunnel or is_webhook:
             # Let the request pass without a tenant

@@ -26,10 +26,8 @@ type Competency = {
 
 // Must match your Django Category.choices exactly
 const SYSTEM_CATEGORIES = [
-  { id: 'MMGT', label: 'Marketing Management' },
-  { id: 'MGM', label: 'Business & Management' },
-  { id: 'PHARMACY', label: 'Pharmacy' },
-  { id: 'ENGR', label: 'Engineering' },
+  { id: 'MMGMT', label: 'Marketing Management' },
+    
 ];
 
 export function DepartmentsManager() {
@@ -63,7 +61,9 @@ export function DepartmentsManager() {
     try {
       const res = await apiClient.get('/departments/');
       // Expect array of { id, name, description, competencies_count? }
+       
       setDepartments(res.data);
+      console.log("DEP:", res.data)
       if (res.data.length > 0 && selectedId === null) setSelectedId(res.data[0].id);
     } catch (err) {
       toast.error('Failed to load departments');

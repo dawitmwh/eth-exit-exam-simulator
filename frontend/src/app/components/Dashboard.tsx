@@ -137,23 +137,21 @@ const handleDownloadReport = async () => {
         <p className="text-slate-400 font-black uppercase text-[10px] tracking-[0.3em]">Neural Sync...</p>
       </div>
     );
-  }
+  }5173
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans selection:bg-emerald-100"> 
       {/* 1. BRANDED HERO HEADER */}
-      <header className="bg-primary/90 text-white relative overflow-hidden">
-        <div className="container max-w-7xl mx-auto px-6 py-12 md:py-16 relative z-10">
+      <header className="bg-emerald-100 text-white relative overflow-hidden">
+        <div className="container max-w-7xl mx-auto px-2 py-2 md:py-2 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-emerald-300 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
-               <ShieldCheck size={12} className="fill-current" /> {data?.university} • Secured Session
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-red-300 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+               <ShieldCheck size={30} className="fill-current" /> <h1>Welcome to {data?.university} • Secured Session</h1>
             </div>
-            <h1 className="text-2xl md:text-2xl font-black tracking-tighter mb-3 leading-none">
-              Welcome back, <span className="text-emerald-400">{user?.full_name?.split(' ')[0]}!</span>
-            </h1>
-            <p className="text-emerald-100/60 text-lg font-medium">
-              You are currently in the <span className="text-emerald-400 font-bold uppercase tracking-wider">Top 15%</span> of your department.
+            <p className="text-2xl md:text-2xl font-black tracking-tighter mb-3 leading-none">
+              Administrator:  &nbsp;<span className="text-blue-400">{user?.full_name?.split(' ')[0]}!</span>
             </p>
+            
           </motion.div>
         </div>
         {/* Abstract background art */}

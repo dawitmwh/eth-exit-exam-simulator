@@ -53,7 +53,8 @@ export default function App() {
   // 1. Detect Environment
   const isRootDomain = useMemo(() => {
     const hostname = window.location.hostname;
-    return hostname === 'localhost' || hostname === '127.0.0.1';
+    // return hostname === 'localhost' || hostname === '127.0.0.1';
+     return hostname === 'http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com' || hostname === '127.0.0.1';
   }, []);
 
   useEffect(() => {

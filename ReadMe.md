@@ -131,3 +131,35 @@ The demo uses mock auth stored in [frontend/src/app/contexts/AuthContext.tsx](fr
 
 ## Contributing
 - Make a branch,
+
+## Program Flow
+
+Browser
+   │
+   │ http://universal-college.ec2-51-20-150-131.eu-north-1.compute.amazonaws.com
+   ↓
+React
+   │
+   │ detects:
+   │ universal-college
+   ↓
+client.tsx
+   │
+   │ http://universal-college.ec2-51-20-150-131.eu-north-1.compute.amazonaws.com:8000/api/
+   ↓
+Django
+   │
+   ↓
+TenantMiddleware
+   │
+   │ extracts:
+   │ tenant_slug = universal-college
+   ↓
+PostgreSQL
+   │
+   │ slug = universal-college
+   │ is_active = True
+   ↓
+request.tenant = Universal College
+   ↓
+API View

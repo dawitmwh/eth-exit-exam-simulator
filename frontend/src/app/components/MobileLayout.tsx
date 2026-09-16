@@ -1,7 +1,7 @@
 import { Outlet, useLocation, Link } from 'react-router';
 import { 
   Home, BookOpen, BarChart3, User, Users, Building2,
-  Shield, Upload, LogOut, LayoutGrid, Settings, SchoolIcon,
+  ActivityIcon, Upload, LogOut, LayoutGrid, Settings, SchoolIcon,
   GraduationCap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,6 +41,7 @@ export function MobileLayout() {
     { path: '/admin/upload', icon: Upload, label: 'Import' },
     { path: '/admin/classrooms', icon: SchoolIcon, label: 'Classrooms' },
     { path: '/profile', icon: User, label: 'Profile' },
+    { path: '/admin/dashboard', icon: ActivityIcon, label: 'Admin' },
   ];
 
   const isAdmin = user?.role === 'ADMIN';

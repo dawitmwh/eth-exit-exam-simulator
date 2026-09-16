@@ -5,7 +5,7 @@ from django.conf import settings
 # CompetencyArea is like a "subject" or "topic" that questions belong to, e.g., "Pharmacology" or "Structural Engineering"
 class CompetencyArea(models.Model):
     book = models.ForeignKey(ExamBook, on_delete=models.CASCADE, related_name='competencies')
-    name = models.CharField(max_length=255) # e.g., "Pharmacology"  
+    name = models.CharField(max_length=255, default="Mock Exit Exam") # e.g., "Pharmacology"  
     duration_minutes = models.IntegerField(default=60)
 
     def __str__(self):

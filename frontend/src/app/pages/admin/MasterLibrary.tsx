@@ -53,19 +53,19 @@ export function MasterLibrary() {
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-violet-600" /></div>;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 md:p-12 space-y-10">
+    <div className="min-h-screen bg-emerald-200 p-6 md:p-12 space-y-10">
       
       {/* 1. HEADER */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-           <p className="text-[10px] font-black text-violet-600 uppercase tracking-[0.3em] mb-2">Content Division</p>
-           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Master <span className="text-violet-600">Library.</span></h1>
+           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-2">Content Division</p>
+           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Master <span className="text-emerald-600">Library.</span></h1>
         </div>
         
         {/* THE BUTTON IS NOW ACTIVE */}
         <Button 
           onClick={() => setIsDialogOpen(true)}
-          className="bg-violet-600 hover:bg-violet-700 text-white rounded-2xl h-14 px-8 font-black shadow-lg shadow-violet-100 transition-all active:scale-95"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-14 px-8 font-black shadow-lg shadow-violet-100 transition-all active:scale-95"
         >
           <Plus size={20} className="mr-2" /> New Publication
         </Button>
@@ -75,18 +75,17 @@ export function MasterLibrary() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {books.map((book) => (
           <Card key={book.id} className="p-8 border-none shadow-xl shadow-indigo-900/5 rounded-[40px] bg-white group hover:y-[-8px] transition-all">
-             {/* ... (Existing Book Card UI) ... */}
              <div className="flex justify-between items-start mb-8">
-                <div className="p-4 bg-violet-50 text-violet-600 rounded-2xl">
+                <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl">
                    <Book size={28} />
                 </div>
-                <Badge className="bg-slate-100 text-slate-500 border-none font-bold text-[10px] uppercase">{book.category}</Badge>
+                <Badge className="bg-slate-100 text-emerald-500 border-none font-bold text-[15px] uppercase">{book.category}</Badge>
              </div>
              <h3 className="text-2xl font-black text-slate-900 mb-2">{book.title}</h3>
              <p className="text-sm text-slate-500 font-medium line-clamp-2 mb-8">{book.description}</p>
              <div className="pt-8 border-t border-slate-50 flex items-center justify-between">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-tighter">{book.competencies_count} Modules</span>
-                <button className="text-violet-600 font-bold text-sm hover:underline">Manage Content</button>
+                <button className="text-blue-600 font-bold text-sm hover:underline">Manage Content</button>
              </div>
           </Card>
         ))}

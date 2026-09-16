@@ -82,7 +82,7 @@ export function AdminQuestionUpload() {
   if (loading) return <div className="flex h-screen items-center justify-center md:ml-64"><Loader2 className="animate-spin text-indigo-600" /></div>;
 
   return (
-    <div className="min-h-screen md:ml-64 bg-slate-50 p-6 md:p-10">
+    <div className="min-h-screen bg-emerald-200 p-6 md:p-12 space-y-10">
       <header className="max-w-4xl mx-auto mb-10">
         <h1 className="text-3xl font-black text-slate-900">Content Factory</h1>
         <p className="text-slate-500">Bulk upload questions to your question bank via CSV.</p>
@@ -92,7 +92,7 @@ export function AdminQuestionUpload() {
         
         {/* LEFT: INSTRUCTIONS */}
         <section className="lg:col-span-1 space-y-6">
-          <Card className="p-6 bg-indigo-900 text-white border-none shadow-xl">
+          <Card className="p-6 bg-emerald-900 text-white border-none shadow-xl">
              <div className="flex items-center gap-2 mb-4">
                 <HelpCircle className="text-indigo-300" size={20} />
                 <h2 className="font-bold">Instructions</h2>
@@ -135,7 +135,7 @@ export function AdminQuestionUpload() {
               {/* FILE DROPZONE */}
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">CSV File</label>
-                <div className={`relative group border-2 border-dashed rounded-[32px] transition-all p-12 text-center ${file ? 'border-green-500 bg-green-50/30' : 'border-slate-200 hover:border-indigo-400 bg-slate-50/50'}`}>
+                <div className={`relative group border-2 border-dashed rounded-[32px] transition-all p-12 text-center ${file ? 'border-green-500 bg-green-50/30' : 'border-slate-200 hover:border-emerald-400 bg-slate-50/50'}`}>
                   <input 
                     type="file" 
                     accept=".csv"
@@ -152,7 +152,7 @@ export function AdminQuestionUpload() {
                     ) : (
                       <>
                         <div className="p-4 bg-white rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                          <Upload className="text-indigo-600" size={32} />
+                          <Upload className="text-emerald-600" size={32} />
                         </div>
                         <p className="font-bold text-slate-900">Click or drag CSV here</p>
                         <p className="text-xs text-slate-500 mt-1">Limit 2MB per upload</p>
@@ -165,7 +165,7 @@ export function AdminQuestionUpload() {
               <Button 
                 type="submit" 
                 disabled={isUploading}
-                className="w-full h-16 rounded-[20px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-lg shadow-indigo-100 transition-all"
+                className="w-full h-16 rounded-[20px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg shadow-lg shadow-indigo-100 transition-all"
               >
                 {isUploading ? (
                   <span className="flex items-center gap-2">

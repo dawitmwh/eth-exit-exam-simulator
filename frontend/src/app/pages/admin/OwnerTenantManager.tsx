@@ -52,13 +52,13 @@ export function OwnerTenantManager() {
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-violet-600" size={40} /></div>;
 
   return (
-    <div className="min-h-screen bg-primary p-6 md:p-12 space-y-10">
+    <div className="min-h-screen bg-emerald-200 p-6 md:p-12 space-y-10">
       
       {/* HEADER */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-           <p className="text-[10px] font-black text-violet-600 uppercase tracking-[0.3em] mb-2">Registry Division</p>
-           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Institutional <span className="text-violet-600">Tenants.</span></h1>
+           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-2">Registry Division</p>
+           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Institutional <span className="text-emerald-600">Tenants.</span></h1>
            <p className="text-slate-500 font-medium mt-2">Oversee university workspaces and license distribution.</p>
         </div>
         
@@ -91,13 +91,13 @@ export function OwnerTenantManager() {
                 <tr key={uni.id} className="hover:bg-slate-50/50 transition-all group">
                   <td className="p-8">
                     <div className="flex items-center gap-4">
-                       <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black">
+                       <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-emerald-600 font-black">
                           {uni.name.charAt(0)}
                        </div>
                        <div>
                           <p className="font-black text-slate-900 leading-none mb-1">{uni.name}</p>
-                          <a href={`http://${uni.slug}.localhost:5173`} target="_blank" className="text-xs font-bold text-violet-500 flex items-center gap-1 hover:underline">
-                             {uni.slug}.exitexam.com <ExternalLink size={10} />
+                          <a href={`http://${uni.slug}.localhost:5173`} target="_blank" className="text-xs font-bold text-blue-500 flex items-center gap-1 hover:underline">
+                             {uni.slug}.exitexam.com <ExternalLink size={15} />
                           </a>
                        </div>
                     </div>
@@ -108,7 +108,7 @@ export function OwnerTenantManager() {
                         <span className="text-xl font-black text-slate-900">{uni.voucher_balance}</span>
                         <button 
                             onClick={() => handleAddCredits(uni.id)}
-                            className="p-1.5 bg-slate-100 rounded-lg text-slate-400 hover:bg-violet-600 hover:text-white transition-all"
+                            className="p-1.5 bg-emerald-500 rounded-lg text-white hover:bg-emerald-600 hover:text-white transition-all"
                         >
                             <Plus size={14} />
                         </button>
@@ -117,7 +117,7 @@ export function OwnerTenantManager() {
 
                   <td className="p-8">
                      <div className="flex items-center gap-2 text-slate-600 font-bold text-sm">
-                        <Users size={16} className="text-slate-300" />
+                        <Users size={20} className="text-emerald-500" />
                         {uni.student_count} Students
                      </div>
                   </td>

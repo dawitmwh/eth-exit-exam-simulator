@@ -142,6 +142,7 @@ class ExamAttemptViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def submit_exam(self, request, pk=None):
         attempt = self.get_object() 
+       
         now = timezone.now()
         if attempt.status == ExamAttempt.Status.COMPLETED:
             return Response({"error": "Exam already submitted"}, status=400)
@@ -158,8 +159,7 @@ class ExamAttemptViewSet(viewsets.ModelViewSet):
             is_overtime = False
             if minutes_taken > (allowed_minutes + 1):
                 is_overtime = True
-                # Optional: You could penalize the score or just flag it for the Dean
-                print(f"Warning: Student {request.user.email} went over time!")
+                
             
         else:
             # Full Mock Exam (Aggregate)

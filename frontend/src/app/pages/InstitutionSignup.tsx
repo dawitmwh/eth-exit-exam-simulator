@@ -94,19 +94,19 @@ const handleCollegeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       <div className="max-w-4xl w-full grid md:grid-cols-2 bg-white rounded-[40px] shadow-2xl shadow-indigo-100 overflow-hidden border border-slate-100">
         
         {/* LEFT: INFORMATION */}
-        <div className="bg-indigo-600 p-12 text-white flex flex-col justify-between">
+        <div className="bg-emerald-600 p-12 text-white flex flex-col justify-between">
             <div>
-                <Building2 size={48} className="mb-8 opacity-50" />
+                <Building2 size={48} className="mb-8 opacity-70" />
                 <h2 className="text-3xl font-black leading-tight mb-4">Start your Institutional Journey.</h2>
-                <p className="text-indigo-100 leading-relaxed">Create a dedicated workspace for your college and empower your students today.</p>
+                <p className="text-yellow-100 leading-relaxed">Create a dedicated workspace for your college and empower your students today.</p>
             </div>
             <div className="space-y-4">
                 <div className="flex gap-3 items-center text-sm font-medium">
-                    <CheckCircle2 size={18} className="text-indigo-300" />
+                    <CheckCircle2 size={18} className="text-yellow-300" />
                     <span>Private Subdomain Access</span>
                 </div>
                 <div className="flex gap-3 items-center text-sm font-medium">
-                    <CheckCircle2 size={18} className="text-indigo-300" />
+                    <CheckCircle2 size={18} className="text-yellow-300" />
                     <span>Real-time Dean Analytics</span>
                 </div>
             </div>
@@ -117,47 +117,72 @@ const handleCollegeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             <h1 className="text-2xl font-bold text-slate-900 mb-8">Register Institution</h1>
             <form onSubmit={handleSignup} className="space-y-5">
                 <div className="space-y-2">
-                    <Label>College Name</Label>
+                    <label className="block text-sm font-medium text-gray-700">
+                        College Name <span className="text-red-500">*</span>
+                    </label>
                     <Input 
                         placeholder="e.g. Damat Hotel and Business College" 
                         required
                         onChange={handleCollegeNameChange}
+                        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
                     />
                 </div>
                 
                 <div className="space-y-2">
-                    <Label>Desired Subdomain</Label>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Desired Domain <span className="text-red-500">*</span>
+                    </label>
                     <Input placeholder="universal-college" value={formData.slug} readOnly className="rounded-r-none border-r-0" />
-                        <span className="h-10 px-4 flex items-center bg-slate-50 border border-slate-200 border-l-0 rounded-r-md text-slate-400 font-bold text-sm">
-                            .exitexam.com
-                        </span>
-                  
-                        
-                    
-                    
+                    <span className="h-10 px-4 flex items-center bg-slate-50 border border-slate-200 border-l-0 rounded-r-md text-slate-400 font-bold text-sm">
+                        .exitexam.com
+                    </span> 
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 pt-4 border-t border-slate-100">
                     <div className="space-y-2">
-                        <Label>Dean/Admin Name</Label>
-                        <Input required onChange={e => setFormData({...formData, admin_name: e.target.value})}/>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Admin Name <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                            required 
+                            onChange={e => setFormData({...formData, admin_name: e.target.value})}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                        />
                     </div>
                     <div className="space-y-2">
-                        <Label>Admin Email</Label>
-                        <Input type="email" required onChange={e => setFormData({...formData, admin_email: e.target.value})}/>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Admin Email <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                            type="email" 
+                            required onChange={e => setFormData({...formData, admin_email: e.target.value})}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                        />
                     </div>
                     <div className="space-y-2">
-                        <Label>Set Password</Label>
-                        <Input type="password" required onChange={e => setFormData({...formData, admin_password: e.target.value})}/>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Set Password <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                            type="password" 
+                            required onChange={e => setFormData({...formData, admin_password: e.target.value})}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                        />
                     </div>
                     <div className="space-y-2">
-                        <Label>Confirm Password</Label>
-                        <Input type="password" required onChange={e => setFormData({...formData, admin_password_confirm: e.target.value})}/>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Confirm Password <span className="text-red-500">*</span>
+                        </label>
+                        <Input 
+                            type="password" 
+                            required onChange={e => setFormData({...formData, admin_password_confirm: e.target.value})}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                            />
                     </div>
                     
                 </div>
 
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 h-14 rounded-2xl font-bold mt-6" disabled={loading}>
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 h-14 rounded-2xl font-bold mt-6" disabled={loading}>
                     {loading ? <Loader2 className="animate-spin" /> : "Create Institutional Portal"}
                 </Button>
             </form>

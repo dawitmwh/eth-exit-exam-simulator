@@ -19,11 +19,15 @@ export function Login() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  // SENIOR MOVE: Detect which university portal this is
+  // Detect which university portal this is
   useEffect(() => {
     const host = window.location.hostname;
     const slug = host.split('.')[0];
-    if (slug !== 'localhost' && slug !== '127') {
+    // if (slug !== 'localhost' && slug !== '127') {
+    //   // Capitalize slug for display (e.g. arsi -> Arsi)
+    //   setTenantName(slug.charAt(0).toUpperCase() + slug.slice(1));
+    // }
+    if (slug !== 'ec2-51-20-150-131.eu-north-1.compute.amazonaws.com' && slug !== '127') {
       // Capitalize slug for display (e.g. arsi -> Arsi)
       setTenantName(slug.charAt(0).toUpperCase() + slug.slice(1));
     }
@@ -41,7 +45,7 @@ export function Login() {
       
       // 2. DETECT DESTINATION
       const host = window.location.hostname;
-      const isRoot = host === 'localhost' || host === '127.0.0.1';
+      const isRoot = host === 'ec2-51-20-150-131.eu-north-1.compute.amazonaws.com' || host === '127.0.0.1';
 
       // We wait for a millisecond to ensure the 'user' state is updated from context
       // or we check the response directly if your login function returns the user.
@@ -134,7 +138,7 @@ export function Login() {
 
             <Button 
               type="submit" 
-              className="w-full h-16 bg-primary hover:bg-emerald-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-900/20 transition-all active:scale-[0.98]"
+              className="w-full h-16 bg-primary hover:bg-red-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-900/20 transition-all active:scale-[0.98]"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -144,7 +148,7 @@ export function Login() {
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  Enter Portal <ArrowRight size={20} />
+                  Signin <ArrowRight size={20} />
                 </span>
               )}
             </Button>

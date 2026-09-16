@@ -61,7 +61,7 @@ export function OwnerDashboard() {
   if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin text-emerald-600" size={40} /></div>;
 
   return (
-    <div className="min-h-screen bg-primary p-6 md:p-12 space-y-10">
+    <div className="min-h-screen bg-emerald-200 p-6 md:p-12 space-y-10">
       
       {/* HEADER */}
       <header className="flex justify-between items-end">
@@ -90,7 +90,7 @@ export function OwnerDashboard() {
             <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Tenant Directory</h2>
             <button 
                 onClick={() => setIsAddModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100 transition-all flex items-center gap-2"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-lg shadow-indigo-100 transition-all flex items-center gap-2"
             >
                 <Plus size={18} /> Add University
             </button>

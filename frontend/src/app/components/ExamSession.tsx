@@ -249,6 +249,7 @@ useEffect(() => {
     }));
 
     try {
+      console.log("ATTEM: ", attemptId)
       const res = await apiClient.post(`/exam-attempts/${attemptId}/submit_exam/`, { answers });
       // Cleanup Storage
       localStorage.removeItem(`active_session_exam_${examId}`);

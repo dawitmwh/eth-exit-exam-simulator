@@ -26,43 +26,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Take environment variables from .env file
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# --- NOW USE THE VARIABLES ---
+ 
 SECRET_KEY = env('SECRET_KEY')
 
 CHAPA_URL = env('CHAPA_URL')  # Use the environment variable for Chapa URL
-
-# Chapa Key
+ 
 CHAPA_SECRET_KEY = env('CHAPA_SECRET_KEY')
 
-print("CHAPA_URL:", CHAPA_URL)
-print("DEBUG: CHAPA KEY EXISTS:", bool(CHAPA_SECRET_KEY))
-
-if CHAPA_SECRET_KEY:
-    print("DEBUG: CHAPA KEY PREFIX:", CHAPA_SECRET_KEY[:15])
-
-
-BASE_URL_DOMAIN = env('BASE_URL_DOMAIN')
+BASE_URL_DOMAIN =  'http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com/'
 
 print("DEBUG: BASE_URL_DOMAIN:", BASE_URL_DOMAIN)
 
 DEBUG = env('DEBUG')
 # Handle Wildcard Subdomains safely
 
-# 1. Allow the pinggy domain to hit your server
-# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '.localhost'])
-# Add the specific pinggy domain from your terminal output here
-#ALLOWED_HOSTS.append('https://jpdpq-196-190-157-91.run.pinggy-free.link') 
+ 
 
 ALLOWED_HOSTS = ['*']
-
-# 2. CRITICAL for Webhooks: Allow CSRF for the external domain
-CSRF_TRUSTED_ORIGINS = [
-    'https://gavdv-196-190-157-91.run.pinggy-free.link',
-    'https://*.pinggy.link',
-    'https://*.pinggy-free.link',
-    'http://localhost:5173',
-]
-
+ 
+ 
 
 # Application definition
 
@@ -100,12 +82,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Allow any subdomain of localhost on the React port (5173)
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://.*\.localhost:5173$",
-    r"^http://localhost:5173$",
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
 ]
-
 
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -141,8 +120,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database configuration
 
-print(f"DEBUG {env('DEBUG')}")
-# sq_name = env('SQLITE_DB_NAME')
+ 
 
 if env('DEBUG'):
     print(f"DEBUG  is TRUE")
