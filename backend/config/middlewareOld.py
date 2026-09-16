@@ -23,7 +23,7 @@ class TenantMiddleware:
 
         is_webhook = 'webhook' in path
         is_tunnel = 'amazonaws' in host or 'piggy' in host
-        is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127', 'amazonaws', 'ec2-51-20-150-131.eu-north-1']
+        is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127']
 
 
         if is_root or is_tunnel or is_webhook:

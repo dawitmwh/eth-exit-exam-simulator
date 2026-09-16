@@ -46,99 +46,158 @@ import { Toaster } from './components/ui/sonner';
 import '../styles/theme.css'; 
 import '../styles/app.css';
 
+
 export default function App() {
+
+  
   const [isSplashLoading, setIsSplashLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
+  const EC2_DOMAIN ='ec2-51-20-150-131.eu-north-1.compute.amazonaws.com';
 
-  // 1. Detect Environment
+
   const isRootDomain = useMemo(() => {
     const hostname = window.location.hostname;
-    // return hostname === 'localhost' || hostname === '127.0.0.1';
-     return hostname === 'http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com' || hostname === '127.0.0.1';
+
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === EC2_DOMAIN
+    );
   }, []);
+
+console.log("APP STARTED");
+console.log("Host:", window.location.hostname);
+console.log("Path:", window.location.pathname);
+console.log("isRootDomain:", isRootDomain);
+ 
 
   useEffect(() => {
     const setVH = () => {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
     };
+
     setVH();
+
     window.addEventListener('resize', setVH);
-    const timer = setTimeout(() => setIsSplashLoading(false), 1500);
+
+    const timer = setTimeout(
+      () => setIsSplashLoading(false),
+      1500
+    );
+
     return () => {
       window.removeEventListener('resize', setVH);
       clearTimeout(timer);
     };
   }, []);
- 
-  // --- HELPER FUNCTIONS ---
+  
 
-function getBrightness(hex: string): number {
-  let cleanHex = hex.replace('#', '');
-  if (cleanHex.length === 3) {
-    cleanHex = cleanHex.split('').map(char => char + char).join('');
+  function getBrightness(hex: string): number {
+    let cleanHex = hex.replace('#', '');
+
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex
+        .split('')
+        .map(char => char + char)
+        .join('');
+    }
+
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+
+    return (r * 299 + g * 587 + b * 114) / 1000;
   }
-  const r = parseInt(cleanHex.substring(0, 2), 16);
-  const g = parseInt(cleanHex.substring(2, 4), 16);
-  const b = parseInt(cleanHex.substring(4, 6), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000;
-}
-const applyBrandColor = (hex: string) => {
-  if (!hex) {
-    console.error("🛑 Branding Error: No hex code received from API");
-    return;
+
+  function hexToRgbString(hex: string): string {
+    let cleanHex = hex.replace('#', '');
+
+    if (cleanHex.length === 3) {
+      cleanHex = cleanHex
+        .split('')
+        .map(char => char + char)
+        .join('');
+    }
+
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+
+    return `${r} ${g} ${b}`;
   }
-  
-  const root = document.documentElement;
 
-  // 1. Convert to RGB numbers
-  const rgbValues = hexToRgbString(hex); 
-  
-  // 2. Inject into the Neural Variable
-  root.style.setProperty('--brand-neural-rgb', rgbValues);
+  const applyBrandColor = (hex: string) => {
+    if (!hex) {
+      console.error(
+        'Branding Error: No hex code received from API'
+      );
+      return;
+    }
 
-  // 3. Handle Foreground
-  const brightness = getBrightness(hex);
-  const fgColor = brightness > 155 ? '#020617' : '#ffffff';
-  root.style.setProperty('--brand-neural-fg', fgColor);
-  
-  console.log(`🎨 SUCCESS: Applied ${hex} as RGB(${rgbValues}) to the UI.`);
-};
+    const root = document.documentElement;
 
-useEffect(() => {
-  const host = window.location.hostname;
-  const isRoot = host === 'localhost' || host === '127.0.0.1';
+    const rgbValues = hexToRgbString(hex);
 
-  console.log("🌐 Current Host:", host);
-  console.log("📍 Is Root Domain?", isRoot);
+    root.style.setProperty(
+      '--brand-neural-rgb',
+      rgbValues
+    );
 
-  if (!isRoot) {
-    console.log("📡 Fetching University Config...");
-    apiClient.get('/core/tenant-config/')
+    const brightness = getBrightness(hex);
+
+    const fgColor =
+      brightness > 155 ? '#020617' : '#ffffff';
+
+    root.style.setProperty(
+      '--brand-neural-fg',
+      fgColor
+    );
+
+    console.log(
+      `SUCCESS: Applied ${hex} as RGB(${rgbValues}) to the UI.`
+    );
+  };
+
+
+  useEffect(() => {
+    const host = window.location.hostname;
+
+    console.log('Current Host:', host);
+    console.log('Is Root Domain?', isRootDomain);
+
+    // Root domains do not have a university tenant
+    if (isRootDomain) {
+      console.log(
+        'Root domain detected. Skipping tenant configuration.'
+      );
+      return;
+    }
+
+    console.log('Fetching University Config...');
+
+    apiClient
+      .get('/core/tenant-config/')
       .then(res => {
-        console.log("📥 API Response Data:", res.data);
-        const universityColor = res.data.primary_color;
+        console.log(
+          'API Response Data:',
+          res.data
+        );
+
+        const universityColor =
+          res.data.primary_color;
+
         applyBrandColor(universityColor);
       })
       .catch(err => {
-        console.error("❌ API Error:", err.response?.status, err.message);
+        console.error(
+          '❌ API Error:',
+          err.response?.status,
+          err.message
+        );
       });
-  }
-}, [isRootDomain]);
-// Ensure your helper returns space-separated numbers
-function hexToRgbString(hex: string): string {
-  let cleanHex = hex.replace('#', '');
-  if (cleanHex.length === 3) {
-    cleanHex = cleanHex.split('').map(char => char + char).join('');
-  }
-  const r = parseInt(cleanHex.substring(0, 2), 16);
-  const g = parseInt(cleanHex.substring(2, 4), 16);
-  const b = parseInt(cleanHex.substring(4, 6), 16);
+  }, [isRootDomain]);
   
-  // MUST return exactly: "12 150 156"
-  return `${r} ${g} ${b}`; 
-}
-
   return (
     <BrowserRouter>
       <AuthProvider>

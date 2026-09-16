@@ -29,15 +29,14 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
  
 SECRET_KEY = env('SECRET_KEY')
 
-CHAPA_URL = env('CHAPA_URL')  # Use the environment variable for Chapa URL
+CHAPA_URL =  'https://api.chapa.co/v1/transaction/initialize'  # Use the environment variable for Chapa URL
  
-CHAPA_SECRET_KEY = env('CHAPA_SECRET_KEY')
+CHAPA_SECRET_KEY = 'CHASECK_TEST-bKuvU22SEzM6nTtNLEIFzqGZpa3zLhg6'
 
 BASE_URL_DOMAIN =  'http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com/'
 
-print("DEBUG: BASE_URL_DOMAIN:", BASE_URL_DOMAIN)
 
-DEBUG = env('DEBUG')
+DEBUG = 'True'
 # Handle Wildcard Subdomains safely
 
  
@@ -84,6 +83,8 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com"
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -122,8 +123,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
  
 
-if env('DEBUG'):
-    print(f"DEBUG  is TRUE")
+if 'DEBUG':
+    
 
     DATABASES = {
         'default': {
@@ -133,7 +134,7 @@ if env('DEBUG'):
     }
 
 else: 
-    print(f"DEBUG  is FALSE")
+     
     DATABASES = {
         'default': env.db(), # This automatically parses DATABASE_URL
     }

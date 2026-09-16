@@ -1,86 +1,45 @@
-// src/api/client.ts
-
 import axios from 'axios';
 
-const EC2_DOMAIN = 'ec2-51-20-150-131.eu-north-1.compute.amazonaws.com';
+const EC2_DOMAIN =
+  'ec2-51-20-150-131.eu-north-1.compute.amazonaws.com';
 
 const getBackendUrl = () => {
   const { hostname, protocol } = window.location;
 
-  // ============================================================
-  // 1. LOCAL DEVELOPMENT
-  // ============================================================
-
-  // Example:
+  // Local tenant:
   // universal-college.localhost:5173
-  //
-  // Backend:
-  // universal-college.localhost:8000/api/
-
   if (hostname.endsWith('.localhost')) {
     const subdomain = hostname.split('.')[0];
 
     return `${protocol}//${subdomain}.localhost:8000/api/`;
   }
 
-  // ============================================================
-  // 2. EC2 ROOT DOMAIN
-  // ============================================================
-
-  // Example:
+  // EC2 root:
   // ec2-51-20-150-131.eu-north-1.compute.amazonaws.com
-  //
-  // Backend:
-  // ec2-51-20-150-131.eu-north-1.compute.amazonaws.com:8000/api/
-
   if (hostname === EC2_DOMAIN) {
     return `${protocol}//${EC2_DOMAIN}:8000/api/`;
   }
 
-  // ============================================================
-  // 3. EC2 TENANT DOMAIN
-  // ============================================================
-
-  // Example:
-  //
+  // EC2 tenant:
   // universal-college.ec2-51-20-150-131.eu-north-1.compute.amazonaws.com
-  //
-  // Backend:
-  //
-  // universal-college.ec2-51-20-150-131.eu-north-1.compute.amazonaws.com:8000/api/
-
   if (hostname.endsWith(`.${EC2_DOMAIN}`)) {
     const subdomain = hostname.replace(`.${EC2_DOMAIN}`, '');
 
     return `${protocol}//${subdomain}.${EC2_DOMAIN}:8000/api/`;
   }
 
-  // ============================================================
-  // 4. FALLBACK
-  // ============================================================
-
+  // Fallback
   return `${protocol}//${EC2_DOMAIN}:8000/api/`;
 };
 
-
-console.log(
-  'Django API URL:',
-  getBackendUrl()
-);
-
+console.log('🌐 Django API URL:', getBackendUrl());
 
 const apiClient = axios.create({
   baseURL: getBackendUrl(),
-
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
-
-// ============================================================
-// URLs THAT DON'T REQUIRE AUTHENTICATION
-// ============================================================
 
 const bypassUrls = [
   'token/',
@@ -88,14 +47,8 @@ const bypassUrls = [
   'tenant/config/',
 ];
 
-
-// ============================================================
-// REQUEST INTERCEPTOR
-// ============================================================
-
 apiClient.interceptors.request.use(
   (config) => {
-
     const isBypassUrl = bypassUrls.some(
       (url) => config.url?.includes(url)
     );
@@ -108,26 +61,13 @@ apiClient.interceptors.request.use(
 
     return config;
   },
-
   (error) => Promise.reject(error)
 );
 
-
-// ============================================================
-// RESPONSE INTERCEPTOR
-// ============================================================
-
 apiClient.interceptors.response.use(
-
   (response) => response,
-
   (error) => {
-
-    if (
-      error.response &&
-      error.response.status === 401
-    ) {
-
+    if (error.response?.status === 401) {
       console.warn(
         'Unauthorized request detected or token expired. Clearing session.'
       );
@@ -136,9 +76,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user_data');
 
-      if (
-        !window.location.pathname.includes('/login')
-      ) {
+      if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login?expired=true';
       }
     }
@@ -147,9 +85,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-
 export default apiClient;
-
 
 
 
