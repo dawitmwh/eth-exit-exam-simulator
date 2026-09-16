@@ -22,10 +22,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 from requests import Response
 from rest_framework.routers import DefaultRouter
+from django.views.generic import APIView
 from exams.views import (
      CompetencyAreaViewSet, QuestionViewSet,
       ExamAttemptViewSet, StudentDashboardView
 )
+
+class TestFunc(APIView):
+    def get(self, request, *args, **kwargs):
+        return Response({"message": f"API is working {timezone.now()}"}, status=200)
 
 from rest_framework_simplejwt.views import (
     # TokenObtainPairView,
@@ -80,7 +85,7 @@ router.register(r'curriculum-analysis', TeacherClassroomViewSet, basename='curri
 router.register(r'owner/books', GlobalBookViewSet, basename='owner-books')
 router.register(r'owner/master-competencies', GlobalCompetencyViewSet, basename='owner-competencies')
 
-def test_func(APView):
+class TestFunc(APIView):
     def get(self, request, *args, **kwargs):
         return Response({"message": f"API is working {timezone.now()}"}, status=200)
 
@@ -114,7 +119,7 @@ urlpatterns = [
     path('api/core/tenant-config/', TenantConfigView.as_view(), name='tenant-config'),
     path('api/exams/results/export/', ExportStudentResultsView.as_view(), name='export-student-results'),
     path('api/exams/reports/institutional-pdf/', InstitutionalReportPDFView.as_view(), name='institutional-pdf'),
-    path('api/test', test_func.as_view(), name='test_api'),
+    path('api/test', TestFunc.as_view(), name='test_api'),
 
 ]
 
