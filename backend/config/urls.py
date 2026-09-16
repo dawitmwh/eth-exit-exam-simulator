@@ -23,12 +23,14 @@ from django.conf.urls.static import static
 from requests import Response
 from rest_framework.routers import DefaultRouter
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from exams.views import (
      CompetencyAreaViewSet, QuestionViewSet,
       ExamAttemptViewSet, StudentDashboardView
 )
 
 class TestFunc(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         return Response({"message": f"API is working {timezone.now()}"}, status=200)
 
