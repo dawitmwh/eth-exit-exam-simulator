@@ -1,0 +1,15 @@
+name: Deploy to EC2
+on:
+  push:
+    branches: [ main ] # Change to 'master' if applicable
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute deployment script via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: /home/ubuntu/deploy.sh
