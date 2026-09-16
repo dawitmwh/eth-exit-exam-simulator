@@ -15,10 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.utils import timezone
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from requests import Response
 from rest_framework.routers import DefaultRouter
 from exams.views import (
      CompetencyAreaViewSet, QuestionViewSet,
@@ -78,6 +80,9 @@ router.register(r'curriculum-analysis', TeacherClassroomViewSet, basename='curri
 router.register(r'owner/books', GlobalBookViewSet, basename='owner-books')
 router.register(r'owner/master-competencies', GlobalCompetencyViewSet, basename='owner-competencies')
 
+def test_func():
+    return Response({"message": f"API is working {timezone.now()}"}, status=200)
+
 urlpatterns = [
     path('admin-a1b2c3d4e5f6g7h8/', admin.site.urls),
     path('api/', include(router.urls)),
@@ -108,6 +113,7 @@ urlpatterns = [
     path('api/core/tenant-config/', TenantConfigView.as_view(), name='tenant-config'),
     path('api/exams/results/export/', ExportStudentResultsView.as_view(), name='export-student-results'),
     path('api/exams/reports/institutional-pdf/', InstitutionalReportPDFView.as_view(), name='institutional-pdf'),
+    path('api/test', test_func),
      
 ]
 
