@@ -113,8 +113,8 @@ urlpatterns = [
     path('api/core/tenant-config/', TenantConfigView.as_view(), name='tenant-config'),
     path('api/exams/results/export/', ExportStudentResultsView.as_view(), name='export-student-results'),
     path('api/exams/reports/institutional-pdf/', InstitutionalReportPDFView.as_view(), name='institutional-pdf'),
-    path('api/tes', te_func),
-     
+    path('api/test', test_func),
+
 ]
 
 if settings.DEBUG:
