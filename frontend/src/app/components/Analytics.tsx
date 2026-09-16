@@ -21,7 +21,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, 
   CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area 
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 
 // --- TYPES ---
@@ -570,7 +570,7 @@ export function Analytics() {
 //   LineChart, Line, BarChart, Bar, XAxis, YAxis, 
 //   CartesianGrid, Tooltip, ResponsiveContainer, Cell 
 // } from 'recharts';
-// import { motion } from 'framer-motion';
+// import { motion } from 'motion/react';
 
 // // --- TYPES ---
 // interface AnalyticsData {

@@ -7,7 +7,7 @@ import {
   Brain, Zap, Loader2, Upload, BookOpen, Activity, 
   ShieldCheck, ArrowUpRight , Star, Download, FileText
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Progress } from '../components/ui/progress';

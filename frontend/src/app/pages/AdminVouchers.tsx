@@ -9,7 +9,7 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { VoucherTable } from './VoucherTable'; // Ensure these paths are correct
 import { BillingTable } from './BillingTable';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router';
 // canvas-confetti does not ship with TypeScript declarations.

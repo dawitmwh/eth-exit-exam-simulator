@@ -6,7 +6,7 @@ import {
   Users, Key, Loader2, CheckCircle2, 
   ArrowRight, School, User, XCircle 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Card } from './ui/card';

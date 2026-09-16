@@ -9,7 +9,7 @@ import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import apiClient from '../api/client';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 import {
   User, Mail, GraduationCap, Building2, Trophy, Settings, History,

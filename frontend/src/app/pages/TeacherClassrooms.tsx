@@ -5,7 +5,7 @@ import {
   ChevronRight, Loader2, Search, Target, 
   Trophy, AlertCircle, Trash2, ArrowUpRight, Star 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';

@@ -17,7 +17,7 @@ import {
   Mail,
   Lock
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { toast } from 'sonner';
 
 export function Register() {

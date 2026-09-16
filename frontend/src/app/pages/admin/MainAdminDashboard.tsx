@@ -9,7 +9,7 @@ import {
   BookOpen, FileQuestion, BarChart3, Users, 
   LayoutGrid, Plus, PieChart, Info, Trophy,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 // Real Data Hooks
 import { useDashboardData } from './data/DashboardData';
