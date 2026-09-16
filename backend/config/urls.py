@@ -114,7 +114,7 @@ urlpatterns = [
     path('api/core/tenant-config/', TenantConfigView.as_view(), name='tenant-config'),
     path('api/exams/results/export/', ExportStudentResultsView.as_view(), name='export-student-results'),
     path('api/exams/reports/institutional-pdf/', InstitutionalReportPDFView.as_view(), name='institutional-pdf'),
-    path('api/test', test_func, name='test_api'),
+    path('api/test', test_func.as_view(), name='test_api'),
 
 ]
 
