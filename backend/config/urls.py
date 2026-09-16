@@ -80,8 +80,9 @@ router.register(r'curriculum-analysis', TeacherClassroomViewSet, basename='curri
 router.register(r'owner/books', GlobalBookViewSet, basename='owner-books')
 router.register(r'owner/master-competencies', GlobalCompetencyViewSet, basename='owner-competencies')
 
-def test_func():
-    return Response({"message": f"API is working {timezone.now()}"}, status=200)
+def test_func(APView):
+    def get(self, request, *args, **kwargs):
+        return Response({"message": f"API is working {timezone.now()}"}, status=200)
 
 urlpatterns = [
     path('admin-a1b2c3d4e5f6g7h8/', admin.site.urls),
