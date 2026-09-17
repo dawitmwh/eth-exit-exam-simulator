@@ -52,8 +52,7 @@ export default function App() {
   
   const [isSplashLoading, setIsSplashLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
-  const EC2_DOMAIN ='ec2-51-20-150-131.eu-north-1.compute.amazonaws.com';
-
+  const EC2_DOMAIN = "ec2-51-20-150-131.eu-north-1.compute.amazonaws.com";
 
   const isRootDomain = useMemo(() => {
     const hostname = window.location.hostname;

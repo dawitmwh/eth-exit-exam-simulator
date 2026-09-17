@@ -14,6 +14,14 @@ const getBackendUrl = () => {
   
     return `${protocol}//${subdomain}.localhost:8000/api/`;
   }
+  if (hostname.endsWith('localhost')) {
+    //no subdomain if root domain
+
+  
+    return `${protocol}//localhost:8000/api/`;
+  }
+
+  // EC2 cannot be divided into subdomain, it is justa test DNS system by aws
 
   // EC2 root:
   // ec2-51-20-150-131.eu-north-1.compute.amazonaws.com
@@ -23,19 +31,20 @@ const getBackendUrl = () => {
     return `${protocol}//${EC2_DOMAIN}/api/`;
   }
 
+  //EC2 cannot be divided into subdomain, it is justa test DNS system by aws
   // EC2 tenant:
   // universal-college.ec2-51-20-150-131.eu-north-1.compute.amazonaws.com
-  if (hostname.endsWith(`.${EC2_DOMAIN}`)) {
-    const subdomain = hostname.replace(`.${EC2_DOMAIN}`, '');
+  // if (hostname.endsWith(`.${EC2_DOMAIN}`)) {
+  //   const subdomain = hostname.replace(`.${EC2_DOMAIN}`, '');
 
 
-    //again the web server is accessible on port 80, there is no need to specify it
-    return `${protocol}//${subdomain}.${EC2_DOMAIN}/api/`;
-  }
+  //   //again the web server is accessible on port 80, there is no need to specify it
+  //   return `${protocol}//${subdomain}.${EC2_DOMAIN}/api/`;
+  // }
 
   // Fallback
   //the django api endpoint is accessible from regular http port 80
-  return `${protocol}//${EC2_DOMAIN}/api/`;
+  // return `${protocol}//${EC2_DOMAIN}/api/`;
 };
 
 console.log('🌐 Django API URL:', getBackendUrl());
