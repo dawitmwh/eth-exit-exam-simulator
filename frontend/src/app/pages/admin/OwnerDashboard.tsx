@@ -5,7 +5,7 @@ import {
   BarChart3, Building2, Users, CreditCard, 
   ShieldCheck, ArrowUpRight, Loader2, Power, Plus
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';

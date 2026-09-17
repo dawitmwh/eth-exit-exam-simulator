@@ -15,15 +15,24 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.utils import timezone
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from requests import Response
 from rest_framework.routers import DefaultRouter
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from exams.views import (
      CompetencyAreaViewSet, QuestionViewSet,
       ExamAttemptViewSet, StudentDashboardView
 )
+
+class TestFunc(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, *args, **kwargs):
+        return Response({"message": f"API is working {timezone.now()}"}, status=200)
 
 from rest_framework_simplejwt.views import (
     # TokenObtainPairView,
@@ -78,6 +87,10 @@ router.register(r'curriculum-analysis', TeacherClassroomViewSet, basename='curri
 router.register(r'owner/books', GlobalBookViewSet, basename='owner-books')
 router.register(r'owner/master-competencies', GlobalCompetencyViewSet, basename='owner-competencies')
 
+class TestFunc(APIView):
+    def get(self, request, *args, **kwargs):
+        return Response({"message": f"API is working {timezone.now()}"}, status=200)
+
 urlpatterns = [
     path('admin-a1b2c3d4e5f6g7h8/', admin.site.urls),
     path('api/', include(router.urls)),
@@ -108,7 +121,8 @@ urlpatterns = [
     path('api/core/tenant-config/', TenantConfigView.as_view(), name='tenant-config'),
     path('api/exams/results/export/', ExportStudentResultsView.as_view(), name='export-student-results'),
     path('api/exams/reports/institutional-pdf/', InstitutionalReportPDFView.as_view(), name='institutional-pdf'),
-     
+    path('api/test', TestFunc.as_view(), name='test_api'),
+
 ]
 
 if settings.DEBUG:

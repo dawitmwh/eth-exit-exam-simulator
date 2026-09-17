@@ -4,7 +4,7 @@ import {
   Book, Plus, Database, Loader2, 
   Search, Edit3, Trash2, ArrowRight, X, Check, Sparkles 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';

@@ -5,7 +5,7 @@ import {
   ExternalLink, Search, Loader2, Plus, 
   ShieldAlert, TrendingUp, MoreVertical
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
 export function OwnerTenantManager() {

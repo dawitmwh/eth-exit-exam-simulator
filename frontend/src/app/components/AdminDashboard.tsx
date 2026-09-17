@@ -5,7 +5,7 @@ import {
   Users, ChevronRight, Loader2, Zap, Star, 
   Activity, ShieldCheck, ArrowUpRight
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useDashboardData } from '../pages/admin/data/DashboardData';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -286,7 +286,7 @@ function StatCard({ label, value, icon, sub, color = "indigo" }: any) {
 //   Trophy, Target, BookOpen, TrendingUp, 
 //   Users, ChevronRight, Loader2, Zap, Star 
 // } from 'lucide-react';
-// import { motion } from 'framer-motion';
+// import { motion } from 'motion/react';
 // import { useDashboardData } from '../pages/admin/data/DashboardData';
 
 // export function AdminDashboard() {

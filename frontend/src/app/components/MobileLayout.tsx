@@ -4,7 +4,7 @@ import {
   ActivityIcon, Upload, LogOut, LayoutGrid, Settings, SchoolIcon,
   GraduationCap
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdminMode } from '../contexts/AdminContext';
 import { use } from 'react';
