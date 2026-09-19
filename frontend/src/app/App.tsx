@@ -60,7 +60,9 @@ export default function App() {
     return (
       hostname === 'localhost' ||
       hostname === '127.0.0.1' ||
-      hostname === EC2_DOMAIN
+      hostname === '' ||
+      hostname === EC2_DOMAIN ||
+      hostname.includes('.amazonaws.com') 
     );
   }, []);
 
