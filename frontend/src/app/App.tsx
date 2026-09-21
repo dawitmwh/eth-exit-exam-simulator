@@ -62,6 +62,7 @@ export default function App() {
       hostname === '127.0.0.1' ||
       hostname === '' ||
       hostname === EC2_DOMAIN ||
+      hostname === 'ethioexitexamprep.xyz' ||
       hostname.includes('.amazonaws.com') 
     );
   }, []);
