@@ -60,7 +60,6 @@ export default function App() {
     return (
       hostname === 'localhost' ||
       hostname === '127.0.0.1' ||
-      hostname === '' ||
       hostname === EC2_DOMAIN ||
       hostname === 'ethioexitexamprep.xyz' ||
       hostname.includes('.amazonaws.com') 
@@ -71,6 +70,7 @@ console.log("APP STARTED");
 console.log("Host:", window.location.hostname);
 console.log("Path:", window.location.pathname);
 console.log("isRootDomain:", isRootDomain);
+console.log("");
  
 
   useEffect(() => {
