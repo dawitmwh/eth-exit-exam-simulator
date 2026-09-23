@@ -15,6 +15,7 @@ class TenantMiddleware:
         host = request.get_host().split(":")[0].lower()
 
         path = request.path
+        parts = host.split('.')
 
         # ---------------------------------------------------------
         # YOUR ROOT / BASE HOSTS
@@ -32,7 +33,7 @@ class TenantMiddleware:
         # ---------------------------------------------------------
 
         is_webhook = "webhook" in path.lower()
-        is_tunnel = 'amazonaws' in host or 'piggy' in host
+        is_tunnel = 'amazonaws' in host or 'piggy' in host or 'ngrok' in host
         is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127']
 
         if is_root or is_tunnel or is_webhook:
