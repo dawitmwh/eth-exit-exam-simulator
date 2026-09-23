@@ -134,7 +134,7 @@ const handleCollegeNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     </label>
                     <Input placeholder="universal-college" value={formData.slug} readOnly className="rounded-r-none border-r-0" />
                     <span className="h-10 px-4 flex items-center bg-slate-50 border border-slate-200 border-l-0 rounded-r-md text-slate-400 font-bold text-sm">
-                        .exitexam.com
+                        .ethioexitexamprep.xyz
                     </span> 
                 </div>
 

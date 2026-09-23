@@ -33,6 +33,7 @@ import Departments from './pages/admin/Departments';
 import { OwnerTenantManager } from './pages/admin/OwnerTenantManager';
 import { TeacherClassrooms } from './pages/TeacherClassrooms';
 import {MasterLibrary } from './pages/admin/MasterLibrary';
+import {TenantNotFound} from './pages/TenantNotFound'
 
 //APIs
 import apiClient from './api/client';
@@ -52,6 +53,8 @@ export default function App() {
   
   const [isSplashLoading, setIsSplashLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
+  const [isTenantValid, setIsTenantValid] = useState<boolean | null>(null);
+  const [tenantSlug, setTenantSlug] = useState<string>('');
   const EC2_DOMAIN = "ec2-51-20-150-131.eu-north-1.compute.amazonaws.com";
 
   const isRootDomain = useMemo(() => {
@@ -190,6 +193,8 @@ console.log("");
           'API Response Data:',
           res.data
         );
+        setTenantSlug(res.data.slug);
+        setIsTenantValid(true);
 
         const universityColor =
           res.data.primary_color;
@@ -197,11 +202,11 @@ console.log("");
         applyBrandColor(universityColor);
       })
       .catch(err => {
-        console.error(
-          '❌ API Error:',
-          err.response?.status,
-          err.message
+        console.log(
+          // '❌ API Error:',
+          err
         );
+        setIsTenantValid(false);
       });
   }, [isRootDomain]);
   
@@ -215,7 +220,9 @@ console.log("");
             <AnimatePresence mode="wait">
               {isSplashLoading ? (
                 <SplashScreen key="splash" />
-              ) : (
+              ) : !isRootDomain && isTenantValid === false ? (
+                <TenantNotFound requestedSlug={tenantSlug} />
+              ) :(
                 <Routes>
                   {/* --- COMMON ROUTES (Available Everywhere) --- */}
                   <Route path="/login" element={<Login />} />
