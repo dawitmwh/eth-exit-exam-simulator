@@ -12,13 +12,13 @@ const getBackendUrl = () => {
     const subdomain = hostname.split('.')[0];
 
   
-    return `${protocol}//${subdomain}.localhost:8000/api/`;
+    return `${protocol}//${subdomain}.localhost:9090/api/`;
   }
   if (hostname.endsWith('localhost')) {
     //no subdomain if root domain
 
   
-    return `${protocol}//localhost:8000/api/`;
+    return `${protocol}//localhost:9090/api/`;
   }
 
   // EC2 cannot be divided into subdomain, it is justa test DNS system by aws

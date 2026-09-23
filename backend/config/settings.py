@@ -84,7 +84,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com"
+     
 ]
 
 CORS_ALLOW_HEADERS = [
