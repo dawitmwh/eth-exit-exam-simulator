@@ -12,13 +12,12 @@ const getBackendUrl = () => {
     const subdomain = hostname.split('.')[0];
 
   
-    return `${protocol}//${subdomain}.localhost:9090/api/`;
+    return `${protocol}//${subdomain}.localhost:8000/api/`;
   }
   if (hostname.endsWith('localhost')) {
     //no subdomain if root domain
 
-  
-    return `${protocol}//localhost:9090/api/`;
+    return `${protocol}//localhost:8000/api/`;
   }
 
   // EC2 cannot be divided into subdomain, it is justa test DNS system by aws
@@ -29,6 +28,10 @@ const getBackendUrl = () => {
       //There is no port on production, it is just on port 80,
     // so we need to account for that in our URL construction.
     return `${protocol}//${EC2_DOMAIN}/api/`;
+  }
+
+  if (hostname === 'http://ethioexitexamprep.xyz/') {
+    return `${protocol}//ethioexitexamprep.xyz/api/`;
   }
 
   //EC2 cannot be divided into subdomain, it is justa test DNS system by aws
