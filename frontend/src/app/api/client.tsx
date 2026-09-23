@@ -30,7 +30,7 @@ const getBackendUrl = () => {
     return `${protocol}//${EC2_DOMAIN}/api/`;
   }
 
-  if (hostname === 'http://ethioexitexamprep.xyz/') {
+  if (hostname === 'ethioexitexamprep.xyz') {
     return `${protocol}//ethioexitexamprep.xyz/api/`;
   }
 
