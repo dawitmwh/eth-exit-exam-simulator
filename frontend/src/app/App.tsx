@@ -57,7 +57,7 @@ export default function App() {
   const isRootDomain = useMemo(() => {
     const hostname = window.location.hostname;
 
-    if (hostname === 'ethioexitexamprep.xyz') {
+    if (hostname == 'ethioexitexamprep.xyz') {
       console.log("Root domain detected: ", hostname);
       return true;
     }
