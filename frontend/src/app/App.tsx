@@ -57,12 +57,17 @@ export default function App() {
   const isRootDomain = useMemo(() => {
     const hostname = window.location.hostname;
 
+    if (hostname === 'ethioexitexamprep.xyz') {
+      console.log("Root domain detected: ", hostname);
+      return true;
+    }
+    console.log("xyz domain undetected: ", hostname);
+
     return (
       hostname === 'localhost' ||
       hostname === '127.0.0.1' ||
       hostname === EC2_DOMAIN ||
-      hostname === 'ethioexitexamprep.xyz' ||
-      hostname.includes('.amazonaws.com') 
+      hostname === 'ethioexitexamprep.xyz'
     );
   }, []);
 
