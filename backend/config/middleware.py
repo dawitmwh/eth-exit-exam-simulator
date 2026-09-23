@@ -32,8 +32,10 @@ class TenantMiddleware:
         # ---------------------------------------------------------
 
         is_webhook = "webhook" in path.lower()
+        is_tunnel = 'amazonaws' in host or 'piggy' in host
+        is_root = len(parts) == 1 or parts[0] in ['www', 'localhost', '127']
 
-        if is_webhook:
+        if is_root or is_tunnel or is_webhook:
             request.tenant = None
             return self.get_response(request)
 
