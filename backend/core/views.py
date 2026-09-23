@@ -127,10 +127,26 @@ class RegisterUniversityView(APIView):
                             else:
                                 # Log Chapa rejection but don't crash the whole signup
                                 print(f"⚠️ Chapa Rejection: {res_data}")
+                    
+                    protocol = 'https' if request.is_secure() else 'http'
+                    base_domain = getattr(settings, 'FRONTEND_BASE_DOMAIN', None)
+                    if not base_domain:
+                        # Fallback using host header if setting is missing
+                        host_parts = request.get_host().split(':')
+                        domain_name = host_parts[0]
+                        
+                        # If running on local dev server host
+                        if 'localhost' in domain_name or '127.0.0.1' in domain_name:
+                            base_domain = 'localhost:5173'
+                        else:
+                            base_domain = domain_name
+                    portal_url = f"{protocol}://{uni.slug}.{base_domain}/login"
+
+
 
                     return Response({
                         "message": "University created successfully",
-                        "portal_url": f"http://{uni.slug}.localhost:5173/login",
+                        "portal_url": portal_url,
                         "checkout_url": checkout_url
                     }, status=201)
 
