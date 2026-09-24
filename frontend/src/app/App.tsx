@@ -220,8 +220,6 @@ console.log("");
             <AnimatePresence mode="wait">
               {isSplashLoading ? (
                 <SplashScreen key="splash" />
-              ) : !isRootDomain && isTenantValid === false ? (
-                <TenantNotFound requestedSlug={tenantSlug} />
               ) :(
                 <Routes>
                   {/* --- COMMON ROUTES (Available Everywhere) --- */}

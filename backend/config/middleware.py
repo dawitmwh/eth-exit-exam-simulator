@@ -25,6 +25,7 @@ class TenantMiddleware:
             "localhost",
             "127.0.0.1",
             "ec2-51-20-150-131.eu-north-1.compute.amazonaws.com",
+            "ethioexitexamprep.xyz",
         }
 
         # ---------------------------------------------------------
@@ -72,11 +73,6 @@ class TenantMiddleware:
         # ---------------------------------------------------------
         # UNKNOWN HOST
         # ---------------------------------------------------------
-        elif 'ethioexitexamprep' in host and parts[0] != "www" and len(parts) > 2:
-            tenant_slug = parts[0]
-
-        elif 'ethioexitexamprep' in host and parts[0] == "www" and len(parts) > 3:
-            tenant_slug = parts[1]
 
         else:
             request.tenant = None
