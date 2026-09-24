@@ -25,7 +25,6 @@ class TenantMiddleware:
             "localhost",
             "127.0.0.1",
             "ec2-51-20-150-131.eu-north-1.compute.amazonaws.com",
-            "ethioexitexamprep.xyz",
         }
 
         # ---------------------------------------------------------
