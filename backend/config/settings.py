@@ -33,7 +33,7 @@ CHAPA_URL =  'https://api.chapa.co/v1/transaction/initialize'  # Use the environ
  
 CHAPA_SECRET_KEY = 'CHASECK_TEST-bKuvU22SEzM6nTtNLEIFzqGZpa3zLhg6'
 
-BASE_URL_DOMAIN =  'https://qejcd-196-190-157-25.run.pinggy-free.link'
+BASE_URL_DOMAIN =  env('BASE_URL_DOMAIN')
 
 
 DEBUG = 'True'
