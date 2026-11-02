@@ -33,13 +33,19 @@ CHAPA_URL =  'https://api.chapa.co/v1/transaction/initialize'  # Use the environ
  
 CHAPA_SECRET_KEY = 'CHASECK_TEST-bKuvU22SEzM6nTtNLEIFzqGZpa3zLhg6'
 
-BASE_URL_DOMAIN =  'https://ethioexitexamprep.xyz'
+# <<<<<<< HEAD
+# BASE_URL_DOMAIN =  'https://ethioexitexamprep.xyz'
+# =======
+# BASE_URL_DOMAIN =  env('BASE_URL_DOMAIN')
+# >>>>>>> db585fddc607a03aadd781b1691a70f9c032dbdd
 
 
-DEBUG = 'True'
+# DEBUG = 'True'
 # Handle Wildcard Subdomains safely
 
- 
+BASE_URL_DOMAIN = env('BASE_URL_DOMAIN')
+
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
  
