@@ -33,7 +33,7 @@ CHAPA_URL =  'https://api.chapa.co/v1/transaction/initialize'  # Use the environ
  
 CHAPA_SECRET_KEY = 'CHASECK_TEST-bKuvU22SEzM6nTtNLEIFzqGZpa3zLhg6'
 
-BASE_URL_DOMAIN =  'https://qejcd-196-190-157-25.run.pinggy-free.link'
+BASE_URL_DOMAIN =  'https://ethioexitexamprep.xyz'
 
 
 DEBUG = 'True'
@@ -209,4 +209,4 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-FRONTEND_BASE_DOMAIN = env('FRONTEND_BASE_DOMAIN')
+FRONTEND_BASE_DOMAIN = 'http://ec2-51-20-150-131.eu-north-1.compute.amazonaws.com'
