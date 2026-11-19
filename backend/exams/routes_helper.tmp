@@ -1,0 +1,9 @@
+from django.urls import path
+
+from .student_insights import (
+    StartExamView,
+    SessionQuestionsView,
+    SubmitExamView,
+    ReviewExamView,
+    StudentAnalyticsView,
+)

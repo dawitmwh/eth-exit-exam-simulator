@@ -1,17 +1,17 @@
 from django.db import models
-from core.models import Department, ExamBook, University, UniversityTenantModel
-from django.conf import settings  
+from core.models import ExamBook, University, UniversityTenantModel
+from django.conf import settings
 
-# CompetencyArea is like a "subject" or "topic" that questions belong to, e.g., "Pharmacology" or "Structural Engineering"
+
 class CompetencyArea(models.Model):
     book = models.ForeignKey(ExamBook, on_delete=models.CASCADE, related_name='competencies')
-    name = models.CharField(max_length=255, default="Mock Exit Exam") # e.g., "Pharmacology"  
+    name = models.CharField(max_length=255, default="Mock Exit Exam")
     duration_minutes = models.IntegerField(default=60)
 
     def __str__(self):
         return f"{self.name} ({self.book.title})"
 
-# Question is the core model representing each exam question. It links to a CompetencyArea and has multiple options.    
+
 class Question(models.Model):
     class Difficulty(models.TextChoices):
         EASY = 'EASY', 'Easy'
@@ -20,7 +20,7 @@ class Question(models.Model):
 
     competency_area = models.ForeignKey(CompetencyArea, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField()
-    explanation = models.TextField(help_text="Shown after the exam for learning")
+    explanation = models.TextField(help_text="Shown in practice mode and after simulated-exam review")
     difficulty = models.CharField(max_length=10, choices=Difficulty.choices, default=Difficulty.MEDIUM)
     university = models.ForeignKey(University, on_delete=models.SET_NULL, null=True, blank=True)
     is_global = models.BooleanField(default=True)
@@ -30,7 +30,7 @@ class Question(models.Model):
     def __str__(self):
         return self.text[:50]
 
-# Each Question can have multiple options, but only one is correct. This model represents those options.
+
 class QuestionOption(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
     option_text = models.CharField(max_length=255)
@@ -40,15 +40,20 @@ class QuestionOption(models.Model):
     def __str__(self):
         return f"{self.question.text[:20]} - {self.option_text}"
 
-# ExamAttempt represents a user's attempt at taking an exam for a specific competency area. It tracks the start/end time, score, and status.
+
 class ExamAttempt(UniversityTenantModel):
     class Status(models.TextChoices):
         STARTED = 'STARTED', 'Started'
         COMPLETED = 'COMPLETED', 'Completed'
         TIMED_OUT = 'TIMED_OUT', 'Timed Out'
 
+    class Mode(models.TextChoices):
+        PRACTICE = 'PRACTICE', 'Practice'
+        SIMULATED = 'SIMULATED', 'Simulated'
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    competency_area = models.ForeignKey(CompetencyArea, on_delete=models.CASCADE, null=True, blank=True) # Or link to an "Exam" model if you have one
+    competency_area = models.ForeignKey(CompetencyArea, on_delete=models.CASCADE, null=True, blank=True)
+    mode = models.CharField(max_length=10, choices=Mode.choices, default=Mode.SIMULATED)
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
     correct_answers = models.PositiveIntegerField(default=0)
@@ -57,15 +62,14 @@ class ExamAttempt(UniversityTenantModel):
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.STARTED)
 
     def __str__(self):
-        return f"{self.user.email}  - ({self.status})"
-        
+        return f"{self.user.email} - ({self.status})"
 
-# ExamResponse represents the user's answer to each question in an attempt. It links to the selected option and whether it was correct.
+
 class ExamResponse(models.Model):
     attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='responses')
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_option = models.ForeignKey(QuestionOption, on_delete=models.CASCADE)
-    is_correct = models.BooleanField() # We store this here to make analytics faster
+    is_correct = models.BooleanField()
     time_spent_seconds = models.IntegerField(default=0)
 
     def __str__(self):

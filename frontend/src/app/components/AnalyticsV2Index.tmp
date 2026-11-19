@@ -1,0 +1,1 @@
+export { AnalyticsV2 as Analytics };
